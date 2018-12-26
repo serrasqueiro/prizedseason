@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  {% if title %}
+  <title>my title is: {{ title }}</title>
+  {% else %}
+  <title>No title page</title>
+  {% endif %}
+</head>
+<body>
+  {% block content %}{% endblock %}
+  <hr color=red>(&copy;)2018  Henrique Moreira
+</body>
+</html>
