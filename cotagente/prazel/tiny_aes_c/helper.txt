@@ -1,0 +1,10 @@
+Using t_aes:
+% gcc -Werror -g -c t_aes.c -o t_aes.o
+
+# use for instance cor.c
+MAIN=$HOME/public_html/git_repos/kapa_cidade/tiny_secure/basic_src/tiny-AES-c-master/cor.c
+% gcc -Werror -g -c $MAIN -o main.o -DUSE_T_AES=1 -I.
+% gcc -o t_aes_test t_aes.o main.o
+# then run:
+% ./t_aes_test
+
