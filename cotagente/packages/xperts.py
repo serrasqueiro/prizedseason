@@ -14,14 +14,18 @@ from fsimpler import Tablex, de_split, de_where
 #
 def test_xperts (aOutFile, inArgs):
   errFile = sys.stderr
+  cmd = None
   param = inArgs
   code = 0
   verbose = 0
   doAny = True
   outFile = aOutFile
-  while len( args )>0 and doAny:
+  if len( param )>0:
+    cmd = param[ 0 ]
+    del param[ 0 ]
+  while len( param )>0 and doAny:
     doAny = False
-    if param[ 0 ]=='-v':
+    if param[ 0 ].find( '-v' )==0:
       doAny = True
       verbose += param[ 0 ].count( 'v' )
       del param[ 0 ]
@@ -31,6 +35,13 @@ def test_xperts (aOutFile, inArgs):
       outFile = open( param[ 1 ], "w" )
       del param[ :2 ]
       continue
+  opts = ("verbose", verbose,
+          "output_stream", outFile,
+          )
+  if cmd:
+    if cmd=="squad":
+      code = run_squad( cmd, param, opts )
+      return code
   # Do tests
   for fileName in param:
     if fileName=='--stdin':
@@ -63,6 +74,42 @@ def test_xperts (aOutFile, inArgs):
   if outFile!=aOutFile:
     outFile.close()
   return code
+
+
+#
+# run_squad()
+#
+def run_squad (cmd, param, opts):
+  verbose = opts[ 1 ]
+  prefs = ("Realfornelos",
+           )
+  """
+Squad examples:
+
+Realfornelos:
+	http://xperteleven.com/players.aspx?dh=1&TeamID=1845332&Boost=0&plang=EN
+ASL:
+	http://xperteleven.com/players.aspx?dh=2&TeamID=1846316&Boost=0&plang=EN
+Indefectiveis:
+	http://xperteleven.com/players.aspx?TeamID=1218537&Boost=0&dh=1&plang=EN
+
+Matches:
+  http://xperteleven.com/games.aspx?Sel=O&TeamID=1845332&dh=1&plang=EN
+  """
+  print("Squads:", prefs)
+  return 0
+
+
+#
+# CLASS Teams
+#
+class Teams:
+  def __init__ (self):
+    self.init_teams()
+
+
+  def init_teams (self):
+    x
 
 
 #
