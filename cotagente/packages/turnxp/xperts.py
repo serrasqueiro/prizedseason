@@ -6,14 +6,14 @@
   Compatibility: python 2 and 3.
 """
 
-from fsimpler import Tablex, de_split, de_where
+import fsimpler
+from fsimpler import Tablex, de_split, de_where, re_join
 
 
 #
 # test_xperts()
 #
-def test_xperts (aOutFile, inArgs):
-  errFile = sys.stderr
+def test_xperts (aOutFile, errFile, inArgs):
   cmd = None
   param = inArgs
   code = 0
@@ -44,6 +44,15 @@ def test_xperts (aOutFile, inArgs):
     if cmd=="squad":
       code = run_squad( cmd, param, opts )
       return code
+    if cmd=="calendar":
+      sqs = []
+      code = run_calendar( outFile, param, opts, sqs )
+      for sq in sqs:
+        print("Squad: '{}', has id: {}".format( sq.name, sq.id ), end=";")
+        isOk = teams.add_squad( sq )
+        print(" NEW" if isOk else "")
+      return code
+    print("cmd:", cmd)
   # Do tests
   for fileName in param:
     if fileName=='--stdin':
@@ -110,6 +119,42 @@ Matches:
 
 
 #
+# run_calendar()
+#
+def run_calendar (outFile, param, opts, sqs):
+  # http://xperteleven.com/fixture.aspx?Lid=414&Lnr=115&dh=1&plang=EN
+  verbose = int( opts[ 1 ] )
+  for p in param:
+    print("PARAM:", p)
+  print("opts:", opts)
+  for fileName in param:
+    name = fileName
+    rf = Tablex( name )
+    rf.read_stream()
+    rf.add_lines( "latin-1" )
+    for a in rf.lines:
+      pos = a.find( 'ctl00_cphMain_dgFixture' )
+      if pos>0:
+        b = a[ pos-1: ]
+        spl = de_split( b, ("<", ">", '&') )
+        fsimpler.list_rid( spl, ("", "amp;") )
+        #fsimpler.list_rid( spl, "amp;" )
+        seemTeam = len( spl )==3 and spl[ -1 ]=="/a"
+        team = de_split( spl[ 0 ], "?" ) if (seemTeam and spl[ 0 ].find( "?teamid=" )>0) else None
+        if verbose>=3:
+          for s in spl:
+            print("Dbg:", "notTeam" if team is None else re_join(';\n',team), "[{}]".format( s ))
+          print("\n")
+        if team is not None:
+          id = spl[ 0 ].split( "=" )[ -1 ]
+          name = spl[ 1 ]
+          sq = Squad( name )
+          sq.set_id( id )
+          sqs.append( sq )
+  return 0
+
+
+#
 # CLASS Teams
 #
 class Teams:
@@ -122,7 +167,9 @@ class Teams:
 
 
   def add_squad (self, squad):
+    added = squad.id not in self.quads
     self.quads[ squad.id ] = squad
+    return added
 
 
 #
@@ -155,6 +202,6 @@ class Squad:
 if __name__ == "__main__":
   import sys
   args = sys.argv[ 1: ]
-  code = test_xperts( sys.stdout, args )
+  code = test_xperts( sys.stdout, sys.stderr, args )
   assert code==0
   sys.exit( code )

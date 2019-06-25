@@ -1,0 +1,23 @@
+# Hint files;
+# ignore any temporary .todo (TO DO) file:
+.todo.txt
+.to_do.txt
+
+# vi-swaps
+.*.swp
+
+# Python cache
+__pycache__
+*.pyc
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.so
+*.lo
+*.o
+*.obj
+# and backup files:
+*.*~
+
