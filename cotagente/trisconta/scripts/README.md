@@ -56,4 +56,6 @@ Basic team list can be created from team_temp xml, obeying the xsd (schema).
 You can see that xml is well-formed from xsd using e.g. xmllint:
 	% xmllint --noout team_temp.xsd team_temp.xml
 
+A rather simpler way to validate your xml compliance with schema is:
+	[W3C XML Schema Validity](http://www.utilities-online.info/xsdvalidation)
 

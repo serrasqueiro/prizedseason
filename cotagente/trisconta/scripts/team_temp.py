@@ -116,7 +116,7 @@ def processor (tuples, opts):
       s = line.strip()
       outFile.write("{}\n".format( s ))
     return 0
-  if verbose>0:
+  if verbose!=-1:
     basic_skel( root )
   return 0
 
@@ -148,6 +148,7 @@ def basic_skel (treeRoot):
         team_tempContent[ tag ] = text
       try:
         anoFundacao = team_tempContent[ "anofundacao" ]
+        assert int( anoFundacao )>=1000
       except:
         anoFundacao = ""
       try:
@@ -156,12 +157,11 @@ def basic_skel (treeRoot):
         guiLabel = ""
       if guiLabel=="":
         guiLabel = human_gui( name )
-      print("{}: {} ; fundado em {}; long-name='{}'".format( myid, name, anoFundacao, guiLabel ))
+      print("{}: {} ; fundado {}{}; long-name='{}'".format( myid, name, "em " if anoFundacao!="" else "", anoFundacao, guiLabel ))
       if myid!=idx:
         if errorInfo is not None:
           errorInfo.write("Bogus index for {}: {}\n".format( name, myid ))
       assert myid==idx
-      assert int( anoFundacao )>=1000
       idx += 1
     pass
     return 0

@@ -6,6 +6,7 @@
 	</TeamList>
 	<TeamList myid="2" name="Sporting">
 		<longname>Sporting Clube de Portugal</longname>
+		<anofundacao>1906</anofundacao>
 	</TeamList>
 	<TeamList myid="3" name="Belenenses">
 	</TeamList>
