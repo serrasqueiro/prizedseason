@@ -1,0 +1,19 @@
+# zzero id;	name;	shortername; # see .../edition_teams.php?id=135717
+229965	Belenenses SAD	Belenenses
+4	Benfica	Benfica
+5	Boavista	Boavista
+7	CD Aves;	Aves
+4336	CD Tondela	Tondela
+2175	FC Famalicão	Famalicão
+9	FC Porto	FC Porto
+11	Gil Vicente	Gil Vicente
+12	Marítimo	Marítimo
+6	Moreirense	Moreirense
+13	Paços de Ferreira	P. de Ferreira
+33	Portimonense	Portimonense
+31	Rio Ave	Rio Ave
+32	Santa Clara	Santa Clara
+15	SC Braga	Braga
+16	Sporting	Sporting
+18	V. Guimarães	V. Guimarães
+35	V. Setúbal	Setubal

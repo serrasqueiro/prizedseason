@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="http://xyz.serrasqueiro.com/TnML/TeamLists" elementFormDefault="qualified" targetNamespace="http://xyz.serrasqueiro.com/TnML/TeamLists">
+    <xs:element name="TeamLists">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element minOccurs="2" maxOccurs="unbounded" ref="TeamList"/>
+            </xs:sequence>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="TeamList">
+        <xs:complexType>
+            <xs:sequence>
+                <xs:element minOccurs="0" ref="longname"/>
+                <xs:element minOccurs="0" ref="anofundacao"/>
+            </xs:sequence>
+            <xs:attribute name="name" use="required" type="xs:NCName"/>
+            <xs:attribute name="myid" use="required" type="xs:integer"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="longname" type="xs:string"/>
+    <xs:element name="anofundacao" type="xs:integer"/>
+</xs:schema>

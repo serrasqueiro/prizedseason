@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<TeamLists xmlns="http://xyz.serrasqueiro.com/TnML/TeamLists" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xyz.serrasqueiro.com/TnML/TeamLists TeamLists.xsd">
+	<TeamList myid="1" name="Benfica">
+		<longname>Sport Lisboa e Benfica</longname>
+		<anofundacao>1904</anofundacao>
+	</TeamList>
+	<TeamList myid="2" name="Sporting">
+		<longname>Sporting Clube de Portugal</longname>
+	</TeamList>
+	<TeamList myid="3" name="Belenenses">
+	</TeamList>
+</TeamLists>
