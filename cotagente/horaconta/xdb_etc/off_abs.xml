@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1" ?>
 <OffLists xmlns="http://xyz.serrasqueiro.com/TnML/OffLists" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://xyz.serrasqueiro.com/TnML/OffLists OffLists.xsd">
-	<OffList date1="20190702" abstype="HO">
+	<OffElem date1="20190704" date2="20190705" abstype="HO">
+	</OffElem>
+	<OffElem date1="20190702" abstype="HO">
 		<comment>Off...</comment>
-	</OffList>
-	<OffList date1="20190704" date2="20190705" abstype="HO">
-	</OffList>
+	</OffElem>
+	<OffElem date1="20190704" date2="20190705" abstype="HO">
+	</OffElem>
 </OffLists>

@@ -25,8 +25,8 @@ def main_run (outFile, errFile, inArgs):
   xdbDir = "../xdb_etc"
   absXml = "off_abs.xml"
   basicSample = """
-	<OffList date1="@1@" date2="@2@" abstype="@3@"@4@>
-	</OffList>
+	<OffElem date1="@1@" date2="@2@" abstype="@3@"@4@>
+	</OffElem>
 """
 
   try:
@@ -59,7 +59,7 @@ def main_run (outFile, errFile, inArgs):
     return 0
 
   if cmd=="dump":
-    if len( param[ 0 ] )>0:
+    if len( param )>0:
       ioXml = param[ 0 ]
     code, counts = cmd_dump( outFile, ioXml, opts )
     return code
@@ -69,7 +69,7 @@ def main_run (outFile, errFile, inArgs):
     return code
 
   if cmd=="sum":
-    if len( param[ 0 ] )>0:
+    if len( param )>0:
       ioXml = param[ 0 ]
     code, counts = cmd_dump( outFile, ioXml, opts )
     for absType in ("HO",):

@@ -3,11 +3,11 @@
     <xs:element name="OffLists">
         <xs:complexType>
             <xs:sequence>
-                <xs:element minOccurs="1" maxOccurs="unbounded" ref="OffList"/>
+                <xs:element maxOccurs="unbounded" ref="OffElem"/>
             </xs:sequence>
         </xs:complexType>
     </xs:element>
-    <xs:element name="OffList">
+    <xs:element name="OffElem">
         <xs:complexType>
             <xs:sequence>
                 <xs:element minOccurs="0" ref="comment"/>
@@ -18,5 +18,13 @@
             <xs:attribute name="abstype" use="required" type="xs:NCName"/>
         </xs:complexType>
     </xs:element>
+
+    <xs:element name="BasicHO">
+        <xs:complexType>
+            <xs:attribute name="date" use="required" type="xs:integer"/>
+            <xs:attribute name="hotype" use="required" type="xs:NCName"/>
+        </xs:complexType>
+    </xs:element>
+
     <xs:element name="comment" type="xs:string"/>
 </xs:schema>
