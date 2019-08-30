@@ -24,6 +24,11 @@ def main_run (outFile, errFile, inArgs):
   verbose = 0
   xdbDir = "../xdb_etc"
   absXml = "off_abs.xml"
+  basicSample = """
+	<OffList date1="@1@" date2="@2@" abstype="@3@"@4@>
+	</OffList>
+"""
+
   try:
     cmd = inArgs[ 0 ]
   except:
@@ -56,17 +61,28 @@ def main_run (outFile, errFile, inArgs):
   if cmd=="dump":
     if len( param[ 0 ] )>0:
       ioXml = param[ 0 ]
-    code = cmd_dump( outFile, ioXml, opts )
+    code, counts = cmd_dump( outFile, ioXml, opts )
     return code
 
   if cmd=="read-raw":
-    basicSample = """
-	<OffList date1="@1@" date2="@2@" abstype="@3@"@4@>
-	</OffList>
-"""
     code = cmd_read_raw( outFile, ioXml, param, basicSample, opts )
     return code
 
+  if cmd=="sum":
+    if len( param[ 0 ] )>0:
+      ioXml = param[ 0 ]
+    code, counts = cmd_dump( outFile, ioXml, opts )
+    for absType in ("HO",):
+      yIdx = 0
+      for y in range(2000,2100):
+        reportYear = y
+        for m in range(12):
+          month = m+1
+          yearThere = counts[ absType ][ yIdx ][ 0 ]
+          if yearThere==reportYear:
+            nDays = counts[ absType ][ yIdx ][ 1 ][ month ]
+            print("HO year={} {:02d} days: {}".format( yearThere, month, nDays ))
+    return code
   return code
 
 
@@ -85,14 +101,16 @@ def cmd_dump (outFile, ioXml, opts):
   def processor (root, debug=0):
     rTag = root.tag
     cont = []
-    dVal = {"HO":0,
+    dVal = {"*any*":0,
+            "HO":0,
             }
     for line in root:
       absType = line.attrib[ "abstype" ]
       strDate1 = line.attrib[ "date1" ]
+      dType = "HO" if absType=="HO" else "*any*"
       if debug>0:
         print("LINE:", line.attrib)
-        print("dVal['{}']={}".format( absType, dVal[ absType ]))
+        print("dVal['{}']={}".format( absType, dVal[ dType ]))
       try:
         strDate2 = line.attrib[ "date2" ]
       except:
@@ -106,13 +124,13 @@ def cmd_dump (outFile, ioXml, opts):
       to = BDate( strDate2 )
       days = to.diff( fr, 1 )
       assert days>0
-      if to.asValue <= dVal[ absType ]:
-        lastWas = BDate( str( dVal[ absType ] ) )
+      if to.asValue <= dVal[ dType ]:
+        lastWas = BDate( str( dVal[ dType ] ) )
         if errorInfo:
           errorInfo.write("Invalid date ({}): {}/ {}, last was: {}\n".format( absType, fr, to, lastWas ))
         assert False
       else:
-        dVal[ absType ] = to.asValue
+        dVal[ dType ] = to.asValue
       cont.append( (absType, days, fr, to) )
     return rTag, cont
 
@@ -124,10 +142,29 @@ def cmd_dump (outFile, ioXml, opts):
   if fIn:
     x = fIn.read()
     rTag, cont = processor( ET.fromstring( x ) )
+    basicMonthly = [0, [0]*13]
+    counts = {"totalHO":[0],
+              "HO":[basicMonthly],
+              }
     for line in cont:
+      sTypeAbs = line[ 0 ]
       days = int( line[ 1 ] )
-      outFile.write("{:3}. days={:<2d} {} to {}\n".format( line[0], days, line[2], line[3] ))
-  return 0
+      fromDate = line[2]
+      toDate = line[3]
+      year = fromDate.ymd[ 0 ]
+      month = fromDate.ymd[ 1 ]
+      assert month>=1 and month<=12
+      yIdx = 0
+      if sTypeAbs=="HO":
+        assert month==toDate.ymd[ 1 ]
+        counts[ "totalHO" ][ 0 ] += days
+        yearThere = counts[ sTypeAbs ][ yIdx ][ 0 ]
+        there = counts[ sTypeAbs ][ yIdx ][ 1 ][ month ]
+        if yearThere==0:
+          counts[ sTypeAbs ][ yIdx ][ 0 ] = year
+        counts[ sTypeAbs ][ yIdx ][ 1 ][ month ] = there + days
+      outFile.write("{:3.3} days={:<2d} {} to {}\n".format( sTypeAbs, days, fromDate, toDate ))
+  return 0, counts
 
 
 #
