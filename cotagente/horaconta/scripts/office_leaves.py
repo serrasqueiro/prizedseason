@@ -61,7 +61,7 @@ def main_run (outFile, errFile, inArgs):
 
   if cmd=="read-raw":
     basicSample = """
-	<OffList date1="@1@" date2="@2@" abstype="HO">
+	<OffList date1="@1@" date2="@2@" abstype="@3@"@4@>
 	</OffList>
 """
     code = cmd_read_raw( outFile, ioXml, param, basicSample, opts )
@@ -176,8 +176,30 @@ def cmd_read_raw (outFile, ioXml, param, basicSample, opts):
   for r in rel:
     strDate1 = str( r[ 1 ] )
     strDate2 = str( r[ 2 ] )
-    s = samplest.replace( "@1@", strDate1 ).replace( "@2@", strDate2 )
-    outFile.write("{}\n".format( s ))
+    strOri = r[ 3 ]
+    ori = strOri.split( " " )
+    absTypeDesc = ori[ 1 ]
+    wDays = None
+    if absTypeDesc.find("HOME")>=0:
+      absType = "HO"
+    elif absTypeDesc.find("VAC")>=0:
+      absType = "VACATION"
+      wDay = float( ori[-1] )
+      assert int( wDay )>=1
+      wDays = int( wDay )
+    else:
+      absType = None
+    if absType is None:
+      if errorInfo:
+          errorInfo.write("Ignored original strip ({}): '{}'\n".format( absTypeDesc, strOri ))
+    else:
+      s = samplest.replace( "@1@", strDate1 ).replace( "@2@", strDate2 )
+      s = s.replace( "@3@", absType )
+      if wDays is None:
+        s = s.replace( "@4@", "" )
+      else:
+        s = s.replace( "@4@", ' wdays="{}"'.format( wDays ) )
+      outFile.write("{}\n".format( s ))
   return 0
         
 

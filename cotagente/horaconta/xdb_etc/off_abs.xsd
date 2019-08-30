@@ -14,6 +14,7 @@
             </xs:sequence>
             <xs:attribute name="date1" use="required" type="xs:integer"/>
             <xs:attribute name="date2" type="xs:integer"/>
+            <xs:attribute name="wdays" type="xs:integer"/>
             <xs:attribute name="abstype" use="required" type="xs:NCName"/>
         </xs:complexType>
     </xs:element>
