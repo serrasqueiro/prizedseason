@@ -1,0 +1,17 @@
+
+
+% curl -o a.htm "http://xperteleven.com/fixture.aspx?Lid=414&Lnr=115&dh=1"
+
+### jogos realizados
+% http://xperteleven.com/games.aspx?Sel=O&TeamID=1845332&dh=1
+% cat jogos_realizados.htm |grep 1845332 | grep "Plantel</a>"
+
+
+
+% py xperts.py example_xpert.htm
+% py xperts.py idle -vv example_xpert.htm
+
+
+% py xnote.py de-base64 /home_02/henrique/wpriv/dude_stuff/notes/bimbos.txt
+
+
