@@ -135,6 +135,7 @@ def dump_table(outFile, errFile, pages, param, opts, rules, debug=1):
         if y <= headingNr: continue
         rowNr += 1
         cIdx = 0
+        dumped = 0
         for cell in entry:
             cIdx += 1
             cLetter = num_to_column_letters(cIdx)
@@ -155,8 +156,10 @@ def dump_table(outFile, errFile, pages, param, opts, rules, debug=1):
                         s = "{}='{}'".format(mTime, cell)
                     else:
                         s = str(mTime)
-            outFile.write("{}: {}\n".format(cell_name, y, s))
-        outFile.write("...\n\n")
+            outFile.write("{}: {}\n".format(cell_name, s))
+            dumped += 1
+        if dumped > 0:
+            outFile.write("...\n\n")
     return 0
 
 
