@@ -1,14 +1,14 @@
 """ stewstick -- basic stock files
 """
 
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument, invalid-name
 
 
 from sys import stdout, stderr
 from zexcess import ZSheets, ZTable, num_to_column_letters
 from ztable.xdate import MsDate, MsTime
 
-CO_version = "1.00 52"
+CO_VERSION = "1.00 53"
 
 
 def run_main(my_path, args):
@@ -33,27 +33,30 @@ def main(me, outFile, errFile, inArgs):
     :return:
     """
     code = None
-    if me=="stewstick":   # stewstick.py
-        code = stewstick_main( outFile, errFile, inArgs )
+    if me == "stewstick":   # stewstick.py
+        code = stewstick_main(outFile, errFile, inArgs)
     return code
 
 
 #
 # stewstick_main()
 #
-def stewstick_main (outFile, errFile, inArgs):
+def stewstick_main(outFile, errFile, inArgs):
+    """
+    Main script run.
+    """
     code = None
     verbose = 0   # use 1, or... 9 for more verbose content!
     args = inArgs
     columns = None
     headingNr = 0
-    if len(args)<=0:
+    if args == []:
         return None
     cmd = args[0]
     param = args[1:]
     # Defaults
     # Options
-    while len( param ) > 0 and param[0].startswith("-"):
+    while len(param) > 0 and param[0].startswith("-"):
         if param[0].find("-v") == 0:
             n = param[0].count("v")
             if n + 1 != len(param[0]):
@@ -78,19 +81,19 @@ def stewstick_main (outFile, errFile, inArgs):
             }
     # Run command
     if cmd == "version":
-        print("stewstick", CO_version)
+        print("stewstick", CO_VERSION)
         return 0
     if cmd == "test":
         return 0
     if cmd == "dump":
-        name = param[ 0 ]
-        del param[ 0 ]
+        name = param[0]
+        del param[0]
         rules = ("open",)
         code = dump(outFile, errFile, name, param, opts, rules)
     return code
 
 
-def dump (outFile, errFile, name, param, opts, rules):
+def dump(outFile, errFile, name, param, opts, rules):
     """
     Dump xls file.
     :param outFile: output stream
@@ -106,7 +109,7 @@ def dump (outFile, errFile, name, param, opts, rules):
     debug = opts["debug"]
     onlyOne = True
     z = ZSheets(name, param)
-    sheets, cont = z.contents()
+    _, cont = z.contents()	# sheets and contents
     for pages in cont:
         code = dump_table(outFile, errFile, pages, param, opts, rules, debug)
         if onlyOne:
@@ -132,7 +135,8 @@ def dump_table(outFile, errFile, pages, param, opts, rules, debug=1):
     tbl = ZTable(pages)
     for entry in tbl.cont:
         y += 1
-        if y <= headingNr: continue
+        if y <= headingNr:
+            continue
         rowNr += 1
         cIdx = 0
         dumped = 0
@@ -163,8 +167,12 @@ def dump_table(outFile, errFile, pages, param, opts, rules, debug=1):
     return 0
 
 
-def work_column_defs (s):
-    if s is None: return None
+def work_column_defs(s):
+    """
+    Work on those columns, defined by user arguments.
+    """
+    if s is None:
+        return None
     cols = ["."] + s.split(":")
     return cols
 
@@ -190,5 +198,5 @@ Options are:
   -v      Verbose (or use -vv, -vvv for more verbose).
 """)
         CODE = 0
-    assert isinstance(CODE, int) and CODE<=255
+    assert isinstance(CODE, int) and CODE <= 255
     sys.exit(CODE)
