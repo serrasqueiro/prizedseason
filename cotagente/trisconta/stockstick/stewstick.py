@@ -49,6 +49,7 @@ def stewstick_main(outFile, errFile, inArgs):
     Main script run.
     """
     code = None
+    ops = []
     verbose = 0   # use 1, or... 9 for more verbose content!
     args = inArgs
     columns = None
@@ -128,7 +129,9 @@ def stewstick_main(outFile, errFile, inArgs):
         if verbose > 0:
             print(":".join(rules.header))
         if code == 0:
-            slim_stocks(outFile, rules.content, param, opts, rules)
+            ops = slim_stocks(rules.content, param, opts, rules)
+        for _, s_row in ops:
+            outFile.write("{}\n".format(s_row))
     tabular = Tabular(out_name, outFile)
     tabular.rewrite()
     if verbose > 0:
@@ -266,7 +269,7 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules, debug=0):
     return code
 
 
-def slim_stocks(outFile, cont, param, opts, rules, debug=0):
+def slim_stocks(cont, param, opts, rules, debug=0):
     """
     Show text tabular stocks
     :param outFile: output stream
@@ -275,13 +278,12 @@ def slim_stocks(outFile, cont, param, opts, rules, debug=0):
     :param opts: options
     :param rules: Rules
     :param debug: int, debug
-    :return: 0
+    :return: list, operations (by date)
     """
+    ops = []
     y = 0
     y_shown = 0
     verbose = opts["verbose"]
-    if outFile is None:
-        return 0
     if param == []:
         what = None
     else:
@@ -311,19 +313,24 @@ def slim_stocks(outFile, cont, param, opts, rules, debug=0):
             if tic == "" and coin != "EUR":
                 tic = coin
             if verbose > 0:
-                outFile.write("{}{} {} {:7} {:_<13.12} {} val: {}{}\n"
-                              "".format(s_idx, weekday, date_time, quant, s_name,
-                                        cur_format(per), cur_format(loc_val), tic))
+                s = "{}{} {} {:7} {:_<13.12} {} val: {}{}".format(
+                    s_idx, weekday, date_time, quant, s_name,
+                    cur_format(per), cur_format(loc_val), tic)
             else:
                 if what is None:
                     s_idx = w + ": "
                 else:
                     s_idx = ""
-                outFile.write("{}{} {} {:7} {:_<13.12} {} val: {}\n"
-                              "".format(s_idx, weekday, date_time, quant, s_name,
-                                        cur_format(per), cur_format(loc_val, tail_blank=None)))
+                s = "{}{} {} {:7} {:_<13.12} {} val: {}".format(
+                    s_idx, weekday, date_time, quant, s_name,
+                    cur_format(per), cur_format(loc_val, tail_blank=None))
+            ops.append(((date_time, s_name, quant, per), s))
             assert coin == "EUR"
-    return 0
+    if len(ops) >= 2:
+        if ops[0][0][0] > ops[-1][0][0]:
+            # Invert list: usually does, as input often starts with latest date first
+            return invert_list(ops)
+    return ops
 
 
 def do_show_row(row, rules):
@@ -379,6 +386,21 @@ def filter_columns(row, rules, cols, debug=0):
         if col_name:
             res.append(cell)
         idx += 1
+    return res
+
+
+def invert_list(ops):
+    """
+    Invert list
+    :param ops: list of operations (well, just a list!)
+    :return: list, the inverted order list
+    """
+    assert isinstance(ops, list)
+    idx = len(ops)
+    res = []
+    while idx > 0:
+        idx -= 1
+        res.append(ops[idx])
     return res
 
 
