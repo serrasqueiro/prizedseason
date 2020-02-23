@@ -1,14 +1,16 @@
 """ stewstick -- basic stock files
 """
 
-# pylint: disable=unused-argument, invalid-name
+# pylint: disable=unused-argument, invalid-name, no-else-return
 
 
 from sys import stdout, stderr
 from zexcess import ZSheets, ZTable, num_to_column_letters
 from zrules import ZRules, cell_string, work_column_defs, keys_from_str
+from ztable.ztables import Tabular
+from ztable.xdate import MsDate
 
-CO_VERSION = "1.00 53"
+CO_VERSION = "1.00 54"
 
 
 def run_main(my_path, args):
@@ -56,6 +58,8 @@ def stewstick_main(outFile, errFile, inArgs):
     param = args[1:]
     # Defaults
     opt_rules = ""
+    out_name = None
+    strict_cols = False
     # Options
     while len(param) > 0 and param[0].startswith("-"):
         if param[0].find("-v") == 0:
@@ -77,20 +81,33 @@ def stewstick_main(outFile, errFile, inArgs):
             opt_rules = param[1]
             del param[:2]
             continue
+        if param[0] in ("-o", "--out"):
+            out_name = param[1]
+            del param[:2]
+            continue
+        if param[0] in ("-s", "--strict"):
+            strict_cols = True
+            del param[0]
+            continue
         return None
     debug = 0 if verbose < 3 else 1
     opts = {"verbose": verbose,
             "debug": debug,
             "col": columns,
+            "strict-cols": strict_cols,
             "heading-number": headingNr,
             }
     # Common parameters
     rules = ZRules(keys_from_str(opt_rules))
+    if out_name is not None:
+        outFile = open(out_name, "w")
     # Run command
     if cmd == "version":
+        assert out_name is None
         print("stewstick", CO_VERSION)
         return 0
-    if cmd == "test":
+    elif cmd == "test":
+        assert out_name is None
         if opt_rules:
             rules.dump()
         return 0
@@ -102,6 +119,17 @@ def stewstick_main(outFile, errFile, inArgs):
         name = param[0]
         del param[0]
         code = dump_textual_table(outFile, errFile, name, param, opts, rules)
+    elif cmd == "slim":
+        name = param[0]
+        del param[0]
+        assert len(param) <= 1
+        code = dump_textual_table(None, errFile, name, [], opts, rules)
+        if code == 0:
+            slim_stocks(outFile, rules.content, param, opts, rules)
+    tabular = Tabular(out_name, outFile)
+    did_write = tabular.rewrite()
+    if verbose > 0:
+        print("Wrote {}({}): {} octets".format(out_name, did_write, tabular.content_size))
     return code
 
 
@@ -182,19 +210,20 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules):
     headingNr = opts["heading-number"]
     assert isinstance(opts, dict)
     code = 0
+    verbose = opts["verbose"]
     z = ZSheets(name, param)
     _, cont = z.contents()
     for pages in cont:
-        y = 0
-        rowNr = 0
+        y, rowNr = 0, 0
+        lines, suppressed = 0, 0
         tbl = ZTable(pages)
         for entry in tbl.cont:
             y += 1
             if y <= headingNr:
+                rules.set_heading(entry)
                 continue
             rowNr += 1
             cIdx = 0
-            dumped = 0
             row = []
             for cell in entry:
                 cIdx += 1
@@ -203,9 +232,95 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules):
                     d = cols[cIdx]
                     s = cell_string(cell, d, "-")
                 row.append(s)
-            if row != []:
-                outFile.write("{}\n".format(row))
+            do_show = do_show_row(row, rules)
+            if do_show:
+                lines += 1
+                pre = ""
+                if opts["strict-cols"]:
+                    s_row = filter_columns(row, rules, cols)
+                else:
+                    s_row = row
+                if outFile is None:
+                    part = []
+                    for a in s_row:
+                        part.append(a)
+                    rules.content.append(part)
+                else:
+                    for a in s_row:
+                        outFile.write("{}{}".format(pre, a))
+                        pre = ";"
+                    outFile.write("\n")
+            else:
+                suppressed += 1
+        if verbose > 0:
+            print("Lines: {}, suppressed: {}".format(lines, suppressed))
+    return code
+
+
+def slim_stocks(outFile, cont, param, opts, rules):
+    if outFile is None:
+        return 0
+    if param == []:
+        what = None
+    else:
+        what = param[0]
+    for row in cont:
+        w = row[0]
+        if what is None or what == w:
+            s_date = row[1]
+            ms = MsDate(s_date)
+            tm = row[2] if len(row[2])>=5 else "0"+row[2]
+            date_time = s_date+" "+tm
+            rest = row[3:]
+            s_name, _, _, q, _, _, s_loc_val, coin = rest
+            loc_val = float(s_loc_val)
+            weekday = ms.weekday_str()
+            outFile.write("{} {} {:7} {:_<13.12} val: {:12.2f}\n"
+                          "".format(weekday, date_time, q, s_name, loc_val))
+            assert coin == "EUR"
     return 0
+
+
+def do_show_row(row, rules):
+    """
+    Checks whether row is to be shown.
+    :param row: the list of cells
+    :param rules: Rules, including the key columns
+    :return: bool, whether row is relevant to be shown
+    """
+    do_show = rules.key_columns == []
+    if do_show:
+        return True
+    if row == []:
+        return False
+    all_empty = True
+    for k_str in rules.key_columns:
+        if not all_empty:
+            break
+        m_col = rules.header_hash.get(k_str)
+        if m_col is not None:
+            m_col -= 1
+            is_empty = row[m_col] in ("", "-",)
+            if not is_empty:
+                all_empty = False
+                break
+    do_show = not all_empty
+    return do_show
+
+
+def filter_columns(row, rules, cols):
+    assert isinstance(rules, ZRules)
+    idx, len_col = 0, len(cols)
+    res = []
+    for cell in row:
+        if idx < len_col:
+            col_name = cols[idx]
+        else:
+            col_name = ""
+        if col_name:
+            res.append(cell)
+        idx += 1
+    return res
 
 
 #
@@ -221,9 +336,16 @@ if __name__ == "__main__":
 Commands are:
   help
           This help.
-
+  test    Show arguments parsed
+  
   dump    file [sheet]
           Dump xlsx file.
+
+  textual file [sheet]
+          Dump xlsx file as text.
+          
+  slim    file [sheet]
+          Dump xlsx file as text, simple stocks.
 
 Options are:
   -v      Verbose (or use -vv, -vvv for more verbose).
