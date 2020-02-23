@@ -9,7 +9,7 @@ from zexcess import ZSheets, ZTable, num_to_column_letters
 from zrules import ZRules, cell_string, work_column_defs, keys_from_str
 from ztable.ztables import Tabular
 from ztable.xdate import MsDate
-from zlatin import flow_list, numbered_list
+from zlatin import flow_list, numbered_list, cur_format
 
 CO_VERSION = "1.00 54"
 
@@ -133,10 +133,10 @@ def stewstick_main(outFile, errFile, inArgs):
     tabular.rewrite()
     if verbose > 0:
         if out_name:
-            if tabular.content_size>=0:
+            if tabular.content_size >= 0:
                 print("Wrote {}: {} octets".format(out_name, tabular.content_size))
             else:
-                print("Wrote {}".format(out_name, tabular.content_size))
+                print("Wrote {}".format(out_name))
     return code
 
 
@@ -267,7 +267,19 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules, debug=0):
 
 
 def slim_stocks(outFile, cont, param, opts, rules, debug=0):
+    """
+    Show text tabular stocks
+    :param outFile: output stream
+    :param cont: content
+    :param param: parameters
+    :param opts: options
+    :param rules: Rules
+    :param debug: int, debug
+    :return: 0
+    """
     y = 0
+    y_shown = 0
+    verbose = opts["verbose"]
     if outFile is None:
         return 0
     if param == []:
@@ -282,21 +294,34 @@ def slim_stocks(outFile, cont, param, opts, rules, debug=0):
             print("y={}, w='{}'".format(y, w))
             print(">>>\n" + flow_list(row, "\t") + "<<<")
         if what is None or what == w:
+            y_shown += 1
+            s_idx = "" if verbose <= 0 else "{}:\t".format(y_shown)
             s_date = row[1]
             ms = MsDate(s_date)
-            tm = row[2] if len(row[2])>=5 else "0"+row[2]
+            tm = row[2] if len(row[2]) >= 5 else "0" + row[2]
             date_time = s_date+" "+tm
             rest = row[3:]
             s_name, _, _, quant, s_per, coin, s_loc_val = rest
-            per = float(s_per) if s_per not in ("", "-") else 0.0  # per stock value
-            loc_val = float(s_loc_val)
+            per_stock = float(s_per) if s_per not in ("", "-") else 0.0  # per stock value
+            per = round(per_stock, 4)
+            loc_val = round(float(s_loc_val), 3)
             weekday = ms.weekday_str()
-            diff = quant * per - loc_val
-            tic = "" if diff == 0.0 else " diff={:<.2f}=({}*{})".format(diff, quant, per)
-            if tic == "":
+            diff = round(quant * per, 3) - loc_val
+            tic = "" if diff == 0.0 else " diff={:.3f}=({}*{})".format(diff, quant, per)
+            if tic == "" and coin != "EUR":
                 tic = coin
-            outFile.write("{} {} {:7} {:_<13.12} {:12.2f} val: {:12.2f}{}\n"
-                          "".format(weekday, date_time, quant, s_name, per, loc_val, tic))
+            if verbose > 0:
+                outFile.write("{}{} {} {:7} {:_<13.12} {} val: {}{}\n"
+                              "".format(s_idx, weekday, date_time, quant, s_name,
+                                        cur_format(per), cur_format(loc_val), tic))
+            else:
+                if what is None:
+                    s_idx = w + ": "
+                else:
+                    s_idx = ""
+                outFile.write("{}{} {} {:7} {:_<13.12} {} val: {}\n"
+                              "".format(s_idx, weekday, date_time, quant, s_name,
+                                        cur_format(per), cur_format(loc_val, tail_blank=None)))
             assert coin == "EUR"
     return 0
 
@@ -329,6 +354,14 @@ def do_show_row(row, rules):
 
 
 def filter_columns(row, rules, cols, debug=0):
+    """
+    Filter columns based on rules.
+    :param row: the entire row
+    :param rules: Rules
+    :param cols: columns adopted
+    :param debug: debug
+    :return: list, the resulting columns from 'row'
+    """
     assert isinstance(rules, ZRules)
     if cols is None:
         columns = rules.header
