@@ -9,6 +9,7 @@ from zexcess import ZSheets, ZTable, num_to_column_letters
 from zrules import ZRules, cell_string, work_column_defs, keys_from_str
 from ztable.ztables import Tabular
 from ztable.xdate import MsDate
+from zlatin import flow_list, numbered_list
 
 CO_VERSION = "1.00 54"
 
@@ -124,12 +125,18 @@ def stewstick_main(outFile, errFile, inArgs):
         del param[0]
         assert len(param) <= 1
         code = dump_textual_table(None, errFile, name, [], opts, rules)
+        if verbose > 0:
+            print(":".join(rules.header))
         if code == 0:
             slim_stocks(outFile, rules.content, param, opts, rules)
     tabular = Tabular(out_name, outFile)
-    did_write = tabular.rewrite()
+    tabular.rewrite()
     if verbose > 0:
-        print("Wrote {}({}): {} octets".format(out_name, did_write, tabular.content_size))
+        if out_name:
+            if tabular.content_size>=0:
+                print("Wrote {}: {} octets".format(out_name, tabular.content_size))
+            else:
+                print("Wrote {}".format(out_name, tabular.content_size))
     return code
 
 
@@ -195,7 +202,7 @@ def dump_table(outFile, errFile, pages, param, opts, rules, debug=0):
     return 0
 
 
-def dump_textual_table(outFile, errFile, name, param, opts, rules):
+def dump_textual_table(outFile, errFile, name, param, opts, rules, debug=0):
     """
     Dump xcel to textual file.
     :param outFile: output stream
@@ -238,6 +245,8 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules):
                 pre = ""
                 if opts["strict-cols"]:
                     s_row = filter_columns(row, rules, cols)
+                    if debug > 0:
+                        print("s_row:", numbered_list(s_row))
                 else:
                     s_row = row
                 if outFile is None:
@@ -257,7 +266,8 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules):
     return code
 
 
-def slim_stocks(outFile, cont, param, opts, rules):
+def slim_stocks(outFile, cont, param, opts, rules, debug=0):
+    y = 0
     if outFile is None:
         return 0
     if param == []:
@@ -265,18 +275,28 @@ def slim_stocks(outFile, cont, param, opts, rules):
     else:
         what = param[0]
     for row in cont:
+        y += 1
+        # 1:m; 2:2020-02-14; 3:9:45; 4:GALP; 5:''; 6:''; 7:-150; 8:14.01; 9:EUR; 10:-2101.5
         w = row[0]
+        if debug > 0:
+            print("y={}, w='{}'".format(y, w))
+            print(">>>\n" + flow_list(row, "\t") + "<<<")
         if what is None or what == w:
             s_date = row[1]
             ms = MsDate(s_date)
             tm = row[2] if len(row[2])>=5 else "0"+row[2]
             date_time = s_date+" "+tm
             rest = row[3:]
-            s_name, _, _, q, _, _, s_loc_val, coin = rest
+            s_name, _, _, quant, s_per, coin, s_loc_val = rest
+            per = float(s_per) if s_per not in ("", "-") else 0.0  # per stock value
             loc_val = float(s_loc_val)
             weekday = ms.weekday_str()
-            outFile.write("{} {} {:7} {:_<13.12} val: {:12.2f}\n"
-                          "".format(weekday, date_time, q, s_name, loc_val))
+            diff = quant * per - loc_val
+            tic = "" if diff == 0.0 else " diff={:<.2f}=({}*{})".format(diff, quant, per)
+            if tic == "":
+                tic = coin
+            outFile.write("{} {} {:7} {:_<13.12} {:12.2f} val: {:12.2f}{}\n"
+                          "".format(weekday, date_time, quant, s_name, per, loc_val, tic))
             assert coin == "EUR"
     return 0
 
@@ -308,13 +328,19 @@ def do_show_row(row, rules):
     return do_show
 
 
-def filter_columns(row, rules, cols):
+def filter_columns(row, rules, cols, debug=0):
     assert isinstance(rules, ZRules)
-    idx, len_col = 0, len(cols)
+    if cols is None:
+        columns = rules.header
+    else:
+        columns = cols
+    idx, len_col = 1, len(columns)
+    if debug > 0:
+        print("\nfilter_columns: {}\n\t{}".format(numbered_list(row), numbered_list(columns)))
     res = []
     for cell in row:
         if idx < len_col:
-            col_name = cols[idx]
+            col_name = columns[idx]
         else:
             col_name = ""
         if col_name:
