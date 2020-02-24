@@ -219,14 +219,19 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules, debug=0):
     cols = work_column_defs(opts["col"])
     headingNr = opts["heading-number"]
     assert isinstance(opts, dict)
-    code = 0
     verbose = opts["verbose"]
     z = ZSheets(name, param)
-    _, cont = z.contents()
+    sheets, cont = z.contents()
+    assert len(sheets) == len(cont)
+    idx_sheet = 0
     for pages in cont:
         y, rowNr = 0, 0
         lines, suppressed = 0, 0
         tbl = ZTable(pages, strict_charset="latin-like")
+        if verbose > 0:
+            int_name, ws_xml, ref_name = sheets[idx_sheet]
+            print("{}: {} ({})".format(ref_name, int_name, ws_xml))
+        idx_sheet += 1
         for entry in tbl.cont:
             y += 1
             if y <= headingNr:
@@ -266,7 +271,7 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules, debug=0):
                 suppressed += 1
         if verbose > 0:
             print("Lines: {}, suppressed: {}".format(lines, suppressed))
-    return code
+    return 0
 
 
 def slim_stocks(cont, param, opts, rules, debug=0):
