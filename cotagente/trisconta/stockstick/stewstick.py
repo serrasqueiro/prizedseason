@@ -226,7 +226,7 @@ def dump_textual_table(outFile, errFile, name, param, opts, rules, debug=0):
     for pages in cont:
         y, rowNr = 0, 0
         lines, suppressed = 0, 0
-        tbl = ZTable(pages)
+        tbl = ZTable(pages, strict_charset="latin-like")
         for entry in tbl.cont:
             y += 1
             if y <= headingNr:
@@ -371,7 +371,7 @@ def filter_columns(row, rules, cols, debug=0):
     """
     assert isinstance(rules, ZRules)
     if cols is None:
-        columns = rules.header
+        columns = ["."] + rules.header
     else:
         columns = cols
     idx, len_col = 1, len(columns)
