@@ -303,9 +303,8 @@ def slim_stocks(cont, param, opts, rules, debug=0):
         if what is None or what == w:
             y_shown += 1
             s_idx = "" if verbose <= 0 else "{}:\t".format(y_shown)
-            s_date = row[1]
+            s_date, tm = row[1], row[2]
             ms = MsDate(s_date)
-            tm = row[2] if len(row[2]) >= 5 else "0" + row[2]
             date_time = s_date+" "+tm
             rest = row[3:]
             s_name, _, _, quant, s_per, coin, s_loc_val = rest
