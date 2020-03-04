@@ -9,9 +9,14 @@ from zexcess import ZSheets, ZTable, num_to_column_letters
 from zrules import ZRules, cell_string, work_column_defs, keys_from_str
 from ztable.ztables import Tabular
 from ztable.xdate import MsDate
+from ztable.textual import trim_text, OPT_STRIP_BOTH
 from zlatin import flow_list, numbered_list, cur_format
 
-CO_VERSION = "1.00 54"
+import sindexes.weight_stocks
+from snamings import StockWeight, StockRefs
+
+
+CO_VERSION = "1.00 55"
 
 
 def run_main(my_path, args):
@@ -64,7 +69,7 @@ def stewstick_main(outFile, errFile, inArgs):
     strict_cols = False
     # Options
     while len(param) > 0 and param[0].startswith("-"):
-        if param[0].find("-v") == 0:
+        if param[0].startswith("-v"):
             n = param[0].count("v")
             if n + 1 != len(param[0]):
                 return None
@@ -80,7 +85,7 @@ def stewstick_main(outFile, errFile, inArgs):
             del param[:2]
             continue
         if param[0] == "-k":
-            opt_rules = param[1]
+            opt_rules = bring_option_key(param[1])
             del param[:2]
             continue
         if param[0] in ("-o", "--out"):
@@ -101,6 +106,8 @@ def stewstick_main(outFile, errFile, inArgs):
             }
     # Common parameters
     rules = ZRules(keys_from_str(opt_rules))
+    stocks = StockRefs()
+    idxs = populate_stocks(stocks)
     if out_name is not None:
         outFile = open(out_name, "w")
     # Run command
@@ -121,6 +128,11 @@ def stewstick_main(outFile, errFile, inArgs):
         name = param[0]
         del param[0]
         code = dump_textual_table(outFile, errFile, name, param, opts, rules)
+    elif cmd == "stocks":
+        if verbose > 0:
+            print("Used #{} indexes: {}".format(len(idxs), "; ".join(idxs)))
+        show_stock_references(outFile, stocks, verbose)
+        code = 0
     elif cmd == "slim":
         name = param[0]
         del param[0]
@@ -132,6 +144,21 @@ def stewstick_main(outFile, errFile, inArgs):
             ops = slim_stocks(rules.content, param, opts, rules)
         for _, s_row in ops:
             outFile.write("{}\n".format(s_row))
+    elif cmd == "slide":
+        name = param[0]
+        del param[0]
+        assert len(param) <= 1
+        ops = slide_stocks(errFile, name, param, opts, rules, stocks)
+        if verbose > 0:
+            for tup, op in ops:
+                _, nick, _, _ = tup
+                outFile.write("{:_<13.12} text op='{}' {}\n"
+                              "".format(nick, op, tup[1:]))
+        else:
+            for tup, _ in ops:
+                dttm_str, nick, quantity, value = tup
+                outFile.write("{} {:5} {:9.3f} {}\n".format(dttm_str, quantity, value, nick))
+        code = 0 if ops != [] else 2
     tabular = Tabular(out_name, outFile)
     tabular.rewrite()
     if verbose > 0:
@@ -337,6 +364,31 @@ def slim_stocks(cont, param, opts, rules, debug=0):
     return ops
 
 
+def slide_stocks(errFile, name, what, opts, rules, s_refs):
+    assert isinstance(what, (list, tuple))
+    assert isinstance(s_refs, StockRefs)
+
+    def enhance_stk_list(listed, s_refs, column):
+        if column < 1:
+            return listed
+        res = []
+        for elem, s in listed:
+            row = list(elem)
+            idx = column - 1
+            _, nick, _ = get_stock_best_nick(s_refs, row[idx])
+            row[idx] = nick
+            res.append((row, s))
+        return res
+
+    code = dump_textual_table(None, errFile, name, [], opts, rules)
+    if code != 0:
+        return None, []
+    ops = slim_stocks(rules.content, what, opts, rules)
+    # Translate long name stock name with best match, if possible
+    ops = enhance_stk_list(ops, s_refs, 2)
+    return ops
+
+
 def do_show_row(row, rules):
     """
     Checks whether row is to be shown.
@@ -383,12 +435,18 @@ def filter_columns(row, rules, cols, debug=0):
         print("\nfilter_columns: {}\n\t{}".format(numbered_list(row), numbered_list(columns)))
     res = []
     for cell in row:
+        is_str = False
         if idx < len_col:
             col_name = columns[idx]
+            is_str = col_name == "str"
         else:
             col_name = ""
         if col_name:
-            res.append(cell)
+            if is_str:
+                s = trim_text(cell, {"strip": OPT_STRIP_BOTH})
+            else:
+                s = cell
+            res.append(s)
         idx += 1
     return res
 
@@ -406,6 +464,79 @@ def invert_list(ops):
         idx -= 1
         res.append(ops[idx])
     return res
+
+
+def bring_option_key(s):
+    """
+    Bring option key from string.
+    :param s: the list of keys, separated by ':'
+    :return: string, normalized name
+    """
+    if not isinstance(s, str):
+        assert False
+    s = s.replace("_", " ")
+    return s
+
+
+def populate_stocks(stocks):
+    index_names = []
+    for tup_text in (sindexes.weight_stocks.STK_W_PSI20,
+                     ):
+        idx_name, lines = tup_text
+        sw = StockWeight(idx_name, lines)
+        stocks.add_ref_stock(sw)
+        if stocks.current_local() is None:
+            stocks._local = sw
+        index_names.append(idx_name)
+    return index_names
+
+
+def show_stock_references(outFile, stocks, verbose=0):
+    names = []
+    for index_name, stk in stocks.all_refs:
+        for abbrev, w in stk.abbreviations():
+            weight = w if w else 0.0
+            long_name = stk.full_name(abbrev)
+            if verbose > 0 and weight > 0.0:
+                print("Stock index {}, {:9.3f} '{}': {}".format(index_name, weight, abbrev, long_name))
+            else:
+                print("Stock index {}, '{}': {}".format(index_name, abbrev, long_name))
+            names.append(long_name.upper())
+    if verbose > 0:
+        for name in names:
+            is_ok, nick, tup_test = get_stock_best_nick(stocks, name)
+            print("Name: {}, ok? {}, nick={}, {}".format(name, is_ok, nick, tup_test))
+    return True
+
+
+def get_stock_best_nick(stocks, name):
+    assert stocks.current_local() is not None
+    stk = stocks.current_local()
+    trip = _get_stock_best_nick_at(stk, name)
+    return trip
+
+def _get_stock_best_nick_at(stk, name):
+    s = name.replace("_", "").strip()
+    abbrevs = stk.abbrev_list()
+    if s in abbrevs:
+        return True, s, (s,)
+    candidates = ([], [])
+    for abbrev in abbrevs:
+        long_name = stk.full_name(abbrev)
+        x = name.replace(".", "").strip()
+        y = long_name.replace(".", "").strip()
+        if x == y:
+            if abbrev not in candidates[0]:
+                candidates[0].append(abbrev)
+        elif y.startswith(x):
+            if abbrev not in candidates[1]:
+                candidates[1].append(abbrev)
+    res = candidates[0] + candidates[1]
+    if res != []:
+        # Single candidate is best!
+        return True, res[0], tuple(res)
+    hint = "{}(?):nicks={}".format(name, ";".join(abbrevs))
+    return False, hint, tuple()
 
 
 #
@@ -429,8 +560,13 @@ Commands are:
   textual file [sheet]
           Dump xlsx file as text.
           
-  slim    file [sheet]
+  slim    file [ref]
           Dump xlsx file as text, simple stocks.
+
+  slide   file [ref]
+          Similar to slim, but easier text output.
+          Use command 'stocks' to list your local stocks.
+
 
 Options are:
   -v      Verbose (or use -vv, -vvv for more verbose).
