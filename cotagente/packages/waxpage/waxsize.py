@@ -11,8 +11,10 @@ import sys
 
 _DIMENSIONS = {"100ppi": ((850, 1168), (0.0, -1.0)),
                "200ppi": ((1700, 2338), (None, None)),
+               "75ppi": ((636, 876), (-1.0, 0.0)),
                }
 _DIMENSION_A4 = ("200ppi", "100ppi",
+                 "75ppi",
                  )
 
 _DIM_SIZE_A4 = (210.0, 297.0, "mm", "p")
@@ -85,19 +87,36 @@ def verify_tups(dct, dim_tups):
     return is_ok, used
 
 
-def shown_dim(tup, debug=0):
-    """ Basic dimension string """
+def what_dim(tup, debug=0):
+    """ Basic dimensions """
     width, height = tup[0][0], tup[0][1]
     adj_x, adj_y = tup[1][0], tup[1][1]
-    abs_x = width - (adj_x if adj_x is not None else 0)
-    abs_y = height - (adj_y if adj_y is not None else 0)
-    s_adj = "" if adj_y is None else "y{:.0f}pix".format(adj_y)
+    abs_x = width - (adj_x if adj_x is not None else 0.0)
+    abs_y = height - (adj_y if adj_y is not None else 0.0)
+    if adj_x is None:
+        assert adj_y is None
+        s_adj = ""
+    elif adj_y and adj_x == 0.0:
+        s_adj = "y{:.0f}pix".format(adj_y)
+    elif adj_x and adj_y == 0.0:
+        s_adj = "x{:.0f}pix".format(adj_y)
+    else:
+        s_adj = "x{:.0f}pix,y{:.0f}pix".format(adj_x, adj_y)
+    assert (adj_x is None and adj_y is None) or \
+           (isinstance(adj_x, float) and isinstance(adj_y, float))
+    return ((width, height), (abs_x, abs_y), (adj_x, adj_y, s_adj))
+
+
+def shown_dim(tup, debug=0):
+    """ Basic dimension string """
+    dim, abs_dim, adj = what_dim(tup)
+    width, height = dim[0], dim[1]
+    abs_x, abs_y = abs_dim[0], abs_dim[1]
+    adj_x, adj_y = adj[0], adj[1]
+    s_adj = adj[2]
     s_ratio = "{:.2f}".format(abs_y / abs_x)
     s = "Width={}, Height={} ({}), ratio={}" \
         "".format(width, height, s_adj, s_ratio)
-    assert (adj_x is None and adj_y is None) or \
-           (isinstance(adj_x, float) and isinstance(adj_y, float))
-    #print("abs_y:", abs_y)
     return s
 
 
