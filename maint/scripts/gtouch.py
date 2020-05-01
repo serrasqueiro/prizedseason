@@ -111,12 +111,24 @@ def new_repo(err_file, where, name, ret_error=2):
     sys.exit(ret_error)
 
 
-def do_ls(out_file, err_file, param, debug=0):
+def do_ls(out_file, err_file, params, debug=0):
     """ Simple ls (directory listing)
     """
     code = 0
+    param, do_all = params, False
+    if param[0] == '-a':
+        do_all = True
+        del param[0]
     for path in param:
-        di = dirs.DirList(path)
+        if path.startswith("-"):
+            return 4
+    for path in param:
+        if do_all:
+            mask = None
+        else:
+            mask = 0
+        di = dirs.DirList(path, mask)
+        di.get_dir(path)
         di.sort()
         for f in di.folders:
             out_file.write("{}/\n".format(f))
