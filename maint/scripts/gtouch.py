@@ -14,6 +14,7 @@ import sys
 import git
 from ghelper.ghelp import run_list, run_touch, run_detail
 from ghelper.pgit import GRepo, working_dir
+import tconfig.archs.dirs as dirs
 
 REPO_SAMPLE_NAME = "anyrepo"
 
@@ -32,6 +33,8 @@ def main(args):
         print("""gtouch.py command [options]
 
 Commands are:
+   ls       Directory listing (similar to 'ls -1F -a')
+
    list     List files
 
    touch    Touch files
@@ -86,6 +89,11 @@ def run_main(cmd, args, debug=0):
         rp = new_repo(err_file, where, name)
         code = run_detail(err_file, rp, param, debug=debug)
         return code
+    elif cmd == "ls":
+        if param == []:
+            param = [default_dir]
+        code = do_ls(out_file, err_file, param)
+        return code
     return None
 
 
@@ -101,6 +109,26 @@ def new_repo(err_file, where, name, ret_error=2):
         return repo_obj
     err_file.write("Invalid repo: {}\n".format(where))
     sys.exit(ret_error)
+
+
+def do_ls(out_file, err_file, param, debug=0):
+    """ Simple ls (directory listing)
+    """
+    code = 0
+    for path in param:
+        di = dirs.DirList(path)
+        di.sort()
+        for f in di.folders:
+            out_file.write("{}/\n".format(f))
+        for f in di.entries:
+            out_file.write("{}\n".format(f))
+    if debug > 0:
+        print("""
+Debug:
+{}
+<<<"""
+              "".format(di))
+    return code
 
 
 #
