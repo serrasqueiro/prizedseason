@@ -1,0 +1,11 @@
+
+# Moved pdfz.py and poco.py from 'codeclone' repo into this repo,
+#	into: ../packages/hookpdf/
+
+% git log --pretty=email --patch-with-stat --reverse --full-index --binary -- steerblur/camelchassis/pdfz.py > ~/patch.1
+% git log --pretty=email --patch-with-stat --reverse --full-index --binary -- steerblur/camelchassis/poco.py > ~/patch.2
+% cd ../ ../ .. (to the hookpdf directory)
+# Apply a series of patches from mailbox:
+% git am --committer-date-is-author-date < ~/patch.1
+% git am --committer-date-is-author-date < ~/patch.2
+
