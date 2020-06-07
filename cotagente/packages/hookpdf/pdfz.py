@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # pdfz.py  (c)2019, 2020  Henrique Moreira (part of 'hookpdf')
 
 """

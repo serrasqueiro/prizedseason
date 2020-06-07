@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # poco.py  (c)2019, 2020  Henrique Moreira
 
 """
@@ -18,99 +19,16 @@ from waxpage.redit import char_map
 _EXCESSIVE_BLANKS_MAX_COUNT = 10**5
 
 
-def main():
-    code = main_poco(sys.stdout, sys.stderr, sys.argv[ 1: ])
-    if code is None:
-        print("""
-poco.py Command [options]
+class BaseCodeControl:
+    """ Useful, and generic functions """
+    def get_encoding(self):
+        return sys.getdefaultencoding()
 
-Commands are:
-   raw-pdf
-       Show raw PDF chars.
-
-   textual-pdf
-       Show text PDF chars.
-   textual-utf
-       Show text as is (no strip of unicode/ UTF-8 chars)
-   textual-latin
-       My preferred show, ISO-8859-1 (Latin-1)
-
-   seq-pdf
-       Show PDF without excessive blanks
-""")
-        code = 0
-    assert isinstance(code, int)
-    assert code <= 127
-    sys.exit(code)
+    def is_encoding_utf8(self):
+        return self.get_encoding() == "utf-8"
 
 
-def main_poco (outFile, errFile, args):
-    code = None
-    debug = 0
-    verbose = 0
-    outName = None
-    readKind = None
-    if not args:
-        return None
-    cmd = args[0]
-    param = args[1:]
-    # Parse args
-    while param and param[0].startswith( "-" ):
-        if param[0].startswith( "-v" ):
-            verbose += param[0].count( "v" )
-            del param[ 0 ]
-            continue
-        if param[ 0 ].startswith( "-o" ):
-            outName = param[1]
-            del param[:2]
-            continue
-        print("Invalid option(s);\n", param)
-        return None
-    if verbose >= 3:
-        print("Debug on!")
-        debug = 1
-    if outName is not None:
-        outFile = open(outName, "w")
-    # Adjusts before run
-    if cmd == "raw-pdf":
-        readKind = "text"
-    if cmd == "seq-pdf":
-        readKind = "seq"    # no blanks
-    elif cmd in ("textual-pdf",
-                 "textual-latin",  # same as textual-pdf, but allowing Latin-1
-                 "textual-utf",
-                 ):
-        readKind = "textual"
-    # Command run
-    inName = param[0]
-    del param[0]
-    if param:
-        print("Extra parameter{}: {}"
-              "".format("(s)" if len(param) > 1 else "", ", ".join(param)))
-        return None
-    if readKind is None:
-        return None
-    if cmd.find("latin") >= 0:
-        readerControl.set_output_latin1()
-    elif cmd.find("utf") >= 0:
-        readerControl.set_output_utf8()
-    tup = readerControl.pdf_text(inName, readKind, errFile, debug)
-    code, cont = tup
-    if code:
-        if code == 2:
-            errFile.write("Cannot read pdf: {}\n".format(inName))
-        else:
-            errFile.write("No content: {}\n".format(inName))
-    else:
-        for a in cont:
-            outFile.write("{}\n".format(a))
-        code = 0
-    if outName is not None:
-        outFile.close()
-    return code
-
-
-class ReaderControl:
+class ReaderControl(BaseCodeControl):
     """ (PDF) reader control """
     _initFuncOriginal = None
     excCount = 0
@@ -232,9 +150,7 @@ class ReaderControl:
 
     def _from_utf(self, data, rats):
         """ Tries to convert string 'data' into valid ISO-8859-1 (latin-1) """
-        assert isinstance(data, str)
-        infos = tuple()
-        res = data
+        res, infos = latinfy(data)
         return res, infos
 
 
@@ -282,6 +198,68 @@ def hack_str(a_str):
     return res
 
 
+def latinfy(a_str, n_line=0):
+    """ Convert UTF-8 to ISO-8859-1, strict!
+    """
+    # cont = bytes(a_string, encoding="iso-8859-1")
+    errs, fails = tuple(), 0
+    if isinstance(a_str, str):
+        data = to_bytes(a_str)
+        # decode( ... , errors="strict")
+        try:
+            cont = data.decode("utf-8")
+        except UnicodeDecodeError:
+            fails += 1
+    else:
+        assert False
+    if fails:
+        lines = a_str.splitlines()
+        cont, errs = latinfy_lines(lines)
+    return cont, errs
+
+
+def latinfy_lines(lines, debug=0):
+    assert isinstance(lines, (list, tuple))
+    res, errs = [], []
+    idx_line = 0
+    for line in lines:
+        idx_line += 1
+        data, fails = to_bytes(line), 0
+        try:
+            cont = data.decode("utf-8")
+        except UnicodeDecodeError:
+            fails += 1
+        if fails:
+            try:
+                cont = data.decode("iso-8859-1")
+            except UnicodeDecodeError:
+                fails += 1
+        if fails >= 2:
+            plain = simpler_ascii(line)
+            errs.append((plain, idx_line))
+        else:
+            plain = cont
+        if debug > 0:
+            show_infos([(plain, idx_line)], pre_text="fails={}, line=".format(fails))
+        res.append(plain)
+    return "\n".join(res), errs
+
+
+def to_bytes(a_str):
+    data = bytes([ord(x) for x in a_str])
+    return data
+
+
+def show_infos(infos, err=None, plain_data=True, pre_text="Error at line "):
+    if err is None:
+        err = sys.stderr
+    for err_data, err_line in infos:
+        what = err_data if plain_data else simpler_ascii(err_data)
+        if err:
+            err.write("{}{}: {}\n".format(pre_text, err_line, what))
+    return len(infos) > 0
+
+
 #
 # Globals
 #
@@ -292,4 +270,4 @@ readerControl = ReaderControl()
 # Main script
 #
 if __name__ == "__main__":
-    main()
+    print("Import, or see tests at poco.test.py")
