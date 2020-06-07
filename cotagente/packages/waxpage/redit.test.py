@@ -1,7 +1,7 @@
-# redit_test.py  (c)2018, 2020  Henrique Moreira (part of 'camelchassis')
+# redit.test.py  (c)2018, 2020  Henrique Moreira (part of 'waxpage')
 
 """
-  redit_test - Common functions to streams and files.
+  Test 'redit' module
 
   Compatibility: python 3.
 """

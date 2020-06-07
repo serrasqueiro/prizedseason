@@ -5,6 +5,7 @@
 
   Compatibility: python 3.
 """
+# Replaces old 'redito' module.
 
 # pylint: disable=missing-docstring, unused-argument, no-else-return, invalid-name
 # pylint: disable=too-many-instance-attributes
