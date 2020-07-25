@@ -30,6 +30,8 @@ class STable():
 
 class STableText(STable):
     """ Text Table """
+    _remaining_fields = 0
+
     def _add_from_file(self, fname):
         self._origin = fname
         with open(fname, "r", encoding="ISO-8859-1") as f_in:
@@ -53,6 +55,7 @@ class STableKey(STableText):
             self._s_val_join = ";"
         else:
             self._s_val_join = s_val_join
+        self._remaining_fields = 0 if s_val_join else -1
 
     def hash_key(self, invalid_chrs=None):
         inv_chars = self._get_basic_invalid(invalid_chrs)
@@ -64,8 +67,14 @@ class STableKey(STableText):
         heads = head[1:].strip().split(spl_chr)
         for row in rows:
             assert row == row.strip()
-            cells = row.split(spl_chr)
+            if self._remaining_fields == -1:
+                pos = row.find(spl_chr)
+                assert pos > 0
+                cells = [row[:pos], row[pos+1:]]
+            else:
+                cells = row.split(spl_chr)
             if len(cells) != len(heads):
+                self._set_error(f"len(cells) {len(cells)} <> {len(heads)}: {row}")
                 return False
             s_value = self._s_val_join.join(cells[1:])
             k1, k2 = cells[0], s_value
