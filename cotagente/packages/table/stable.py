@@ -17,6 +17,9 @@ class STable():
     def get_rows(self):
         return self._rows
 
+    def get_msg(self):
+        return self._msg
+
     def _set_error(self, msg):
         if not msg:
             return False
@@ -27,9 +30,6 @@ class STable():
 
 class STableText(STable):
     """ Text Table """
-    def get_msg(self):
-        return self._msg
-
     def _add_from_file(self, fname):
         self._origin = fname
         with open(fname, "r", encoding="ISO-8859-1") as f_in:
@@ -44,10 +44,15 @@ class STableKey(STableText):
     _splitter = ";"
     _invalid_chrs_base = " :!?*()"
 
-    def __init__(self, fname=None):
+    def __init__(self, fname=None, s_val_join=None):
+        self._rows, self._msg = [], ""
         if fname:
             self._add_from_file(fname)
         self.keyval = (None, None, None)
+        if s_val_join is None:
+            self._s_val_join = ";"
+        else:
+            self._s_val_join = s_val_join
 
     def hash_key(self, invalid_chrs=None):
         inv_chars = self._get_basic_invalid(invalid_chrs)
@@ -62,7 +67,8 @@ class STableKey(STableText):
             cells = row.split(spl_chr)
             if len(cells) != len(heads):
                 return False
-            k1, k2 = cells[0], cells[1]
+            s_value = self._s_val_join.join(cells[1:])
+            k1, k2 = cells[0], s_value
             assert k1 == k1.strip()
             assert k2 == k2.strip()
             if k1 in key_to:
@@ -71,7 +77,10 @@ class STableKey(STableText):
             if inv_chars:
                 for a_chr in k1:
                     if a_chr in inv_chars:
-                        a_msg = f"Invalid key char, ASCII {ord(a_chr)}d = 0x{ord(a_chr):02x}"
+                        a_msg = f"Invalid key char, ASCII {ord(a_chr)}d = 0x{ord(a_chr):02x}: {k1}"
+                        return not self._set_error(a_msg)
+                    if a_chr < ' ' or a_chr > '~':
+                        a_msg = f"Key char not ASCII7: {ord(a_chr)}d = 0x{ord(a_chr):02x}"
                         return not self._set_error(a_msg)
             key_to[k1] = k2
             if k2 in from_name:
@@ -86,7 +95,7 @@ class STableKey(STableText):
     def _get_basic_invalid(self, invalid_chrs):
         if invalid_chrs is None:
             return ""
-        if invalid_chrs == "@":
+        if invalid_chrs == "@@":
             return self._invalid_chrs_base
         return invalid_chrs
 
