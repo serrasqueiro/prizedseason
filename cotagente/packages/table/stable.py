@@ -5,6 +5,8 @@ Easy simple text tables
 """
 # pylint: disable=missing-function-docstring, unused-argument, no-member
 
+_ONLY_TXT_NL = True  # True: means, *no* CR in text files!
+
 
 class STable():
     """ Simple Table """
@@ -39,13 +41,22 @@ class STableText(STable):
         spl_chr = self._splitter
         return tuple(head[1:].strip().split(spl_chr))
 
-    def _add_from_file(self, fname):
+    def _add_from_file(self, fname) -> bool:
         self._origin = fname
+        is_ok = True
+        if _ONLY_TXT_NL:
+            with open(fname, "rb") as f_temp:
+                data = f_temp.read()
+                if len(data) < 2:
+                    return False
+                is_ok = chr(data[-1]) == "\n" and chr(data[-2]) > ' '
+                f_temp.close()
         with open(fname, "r", encoding="ISO-8859-1") as f_in:
             data = f_in.read().splitlines()
         for row in data:
             self._rows.append(row)
-        return True
+        self._msg = "" if is_ok else f"Bad-formatted-text: {fname}"
+        return is_ok
 
 
 class STableKey(STableText):
