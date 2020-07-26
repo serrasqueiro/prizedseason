@@ -20,6 +20,9 @@ class STable():
     def get_msg(self):
         return self._msg
 
+    def get_origin_file(self):
+        return self._origin
+
     def _set_error(self, msg):
         if not msg:
             return False
@@ -31,6 +34,12 @@ class STable():
 class STableText(STable):
     """ Text Table """
     _remaining_fields = 0
+
+    def get_header(self) -> tuple:
+        head = self._rows[0]
+        assert head[0] == "#"
+        spl_chr = self._splitter
+        return tuple(head[1:].strip().split(spl_chr))
 
     def _add_from_file(self, fname):
         self._origin = fname
