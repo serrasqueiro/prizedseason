@@ -3,9 +3,7 @@
 """
 Easy simple text tables
 """
-# pylint: disable=unused-argument
-
-import sys
+# pylint: disable=missing-function-docstring, unused-argument, no-member
 
 
 class STable():
@@ -74,7 +72,9 @@ class STableKey(STableText):
         rows = self._rows[1:]
         assert head.startswith("#")
         heads = head[1:].strip().split(spl_chr)
+        idx = 1
         for row in rows:
+            idx += 1
             assert row == row.strip()
             if self._remaining_fields == -1:
                 pos = row.find(spl_chr)
@@ -83,7 +83,10 @@ class STableKey(STableText):
             else:
                 cells = row.split(spl_chr)
             if len(cells) != len(heads):
-                self._set_error(f"len(cells) {len(cells)} <> {len(heads)}: {row}")
+                xtra = "" if idx < len(self._rows) else " (last line)"
+                srow = row if row else f"<empty-row>{xtra}"
+                self._set_error(f"len(cells) {len(cells)} <> {len(heads)},"
+                                f" line {idx}: {srow}")
                 return False
             s_value = self._s_val_join.join(cells[1:])
             k1, k2 = cells[0], s_value
