@@ -63,8 +63,9 @@ class STableKey(STableText):
     """ Table with one key """
     _splitter = ";"
     _invalid_chrs_base = " :!?*()"
+    _unique_k2 = True
 
-    def __init__(self, fname=None, s_val_join=None):
+    def __init__(self, fname=None, s_val_join=None, unique_k2=True):
         self._rows, self._msg = [], ""
         if fname:
             self._add_from_file(fname)
@@ -74,6 +75,7 @@ class STableKey(STableText):
         else:
             self._s_val_join = s_val_join
         self._remaining_fields = 0 if s_val_join else -1
+        self._unique_k2 = unique_k2
 
     def hash_key(self, invalid_chrs=None):
         inv_chars = self._get_basic_invalid(invalid_chrs)
@@ -115,7 +117,7 @@ class STableKey(STableText):
                         a_msg = f"Key char not ASCII7: {ord(a_chr)}d = 0x{ord(a_chr):02x}"
                         return not self._set_error(a_msg)
             key_to[k1] = k2
-            if k2 in from_name:
+            if self._unique_k2 and k2 in from_name:
                 self._set_error(f"Duplicate value: '{k2}'")
                 return False
             from_name[k2] = k1
