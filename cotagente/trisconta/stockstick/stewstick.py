@@ -12,7 +12,7 @@ from ztable.xdate import MsDate
 from ztable.textual import trim_text, OPT_STRIP_BOTH
 from zlatin import flow_list, numbered_list, cur_format
 
-import sindexes.weight_stocks
+import sindexes.stockspt
 from snamings import StockWeight, StockRefs
 
 
@@ -480,7 +480,7 @@ def bring_option_key(s):
 
 def populate_stocks(stocks):
     index_names = []
-    for tup_text in (sindexes.weight_stocks.STK_W_PSI20,
+    for tup_text in (sindexes.stockspt.STK_W_PSI20,
                      ):
         idx_name, lines = tup_text
         sw = StockWeight(idx_name, lines)
