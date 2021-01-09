@@ -77,7 +77,13 @@ class STableKey(STableText):
         self._remaining_fields = 0 if s_val_join else -1
         self._unique_k2 = unique_k2
 
-    def hash_key(self, invalid_chrs=None):
+    def hash_key(self, invalid_chrs=None, sort_as="A"):
+        """ Hashes this table.
+            sort_as='A' means order alphabetically, but ignore-case,
+            sort_as='a' means order alphabetically (do not ignore case).
+            sort_as='x' means no sort.
+        """
+        # pylint: disable=invalid-name
         inv_chars = self._get_basic_invalid(invalid_chrs)
         spl_chr = self._splitter
         key_to, from_name = dict(), dict()
@@ -122,7 +128,12 @@ class STableKey(STableText):
                 return False
             from_name[k2] = k1
         ordered = list(key_to.keys())
-        ordered.sort()
+        if sort_as == "A":
+            ordered.sort(key=str.casefold)
+        elif sort_as == "a":
+            ordered.sort()
+        else:
+            assert sort_as == "x"
         self.keyval = (key_to, from_name, ordered)
         return True
 
