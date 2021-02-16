@@ -1,4 +1,4 @@
-# stable.py  (c)2020  Henrique Moreira
+# stable.py  (c)2020, 2021  Henrique Moreira
 
 """
 Easy simple text tables
@@ -34,12 +34,17 @@ class STable():
 class STableText(STable):
     """ Text Table """
     _remaining_fields = 0
+    _key_fields, _all_fields = tuple(), tuple()
 
     def get_header(self) -> tuple:
         head = self._rows[0]
         assert head[0] == "#"
         spl_chr = self._splitter
         return tuple(head[1:].strip().split(spl_chr))
+
+    def get_fields(self) -> tuple:
+        assert isinstance(self._all_fields, tuple)
+        return self._all_fields
 
     def _add_from_file(self, fname) -> bool:
         self._origin = fname
@@ -85,11 +90,14 @@ class STableKey(STableText):
         return (heads[0],)
 
     def get_keys(self) -> list:
-        """ Returns the keyvalues """
+        """ Returns the list of keys, or empty in case table cannot be hashed properly. """
         _, _, ordered = self.keyval
         if ordered is None:
-            self.hash_key()
+            is_ok = self.hash_key()
+            if not is_ok:
+                return list()
             _, _, ordered = self.keyval
+        assert ordered
         assert isinstance(ordered, list)
         return ordered
 
