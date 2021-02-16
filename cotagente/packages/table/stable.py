@@ -35,19 +35,17 @@ class STableText(STable):
     """ Text Table """
     _remaining_fields = 0
     _key_fields, _all_fields = tuple(), tuple()
+    _default_splitter = ";"
 
     def get_header(self) -> tuple:
-        head = self._rows[0]
-        assert head[0] == "#"
-        spl_chr = self._splitter
-        return tuple(head[1:].strip().split(spl_chr))
+        return tuple()
 
     def get_fields(self) -> tuple:
         assert isinstance(self._all_fields, tuple)
         return self._all_fields
 
     def _add_from_file(self, fname) -> bool:
-        self._origin = fname
+        self._origin, self._msg = fname, "Too short"
         is_ok = True
         if _ONLY_TXT_NL:
             with open(fname, "rb") as f_temp:
@@ -66,12 +64,15 @@ class STableText(STable):
 
 class STableKey(STableText):
     """ Table with one key """
-    _splitter = ";"
     _invalid_chrs_base = " :!?*()"
     _unique_k2 = True
 
-    def __init__(self, fname=None, s_val_join=None, unique_k2=True):
+    def __init__(self, fname=None, s_val_join=None, unique_k2=True, split_chr=None):
         self._rows, self._msg = [], ""
+        if split_chr is None:
+            self._splitter = self._default_splitter
+        else:
+            self._splitter = split_chr
         if fname:
             self._add_from_file(fname)
         self.keyval = (None, None, None)
@@ -82,12 +83,21 @@ class STableKey(STableText):
         self._remaining_fields = 0 if s_val_join else -1
         self._unique_k2 = unique_k2
 
+    def get_header(self) -> tuple:
+        head = self._rows[0]
+        assert head[0] == "#"
+        spl_chr = self._splitter
+        return tuple(head[1:].strip().split(spl_chr))
+
     def get_key_names(self) -> tuple:
         """ Returns the key names. """
         heads = self.get_header()
+        self._all_fields = heads
         if self._unique_k2:
-            return (heads[0], heads[1])
-        return (heads[0],)
+            self._key_fields = (heads[0], heads[1])
+            return self._key_fields
+        self._key_fields = (heads[0],)
+        return self._key_fields
 
     def get_keys(self) -> list:
         """ Returns the list of keys, or empty in case table cannot be hashed properly. """

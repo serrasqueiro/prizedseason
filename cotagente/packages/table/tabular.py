@@ -11,15 +11,28 @@ import table.stable as stable
 class Tabular(stable.STableText):
     """ Tabular, 'simplest text' tables!
     """
-    def __init__(self, fname=None, key_fields=None, split_fields=";"):
+    def __init__(self, fname=None, key_fields=None, split_chr=None):
         self._remaining_fields = 0
-        self._splitter = split_fields if split_fields else ";"
+        if split_chr is None:
+            self._splitter = self._default_splitter
+        else:
+            self._splitter = split_chr
+        self._origin, self._rows = "", list()
         keys = key_fields if key_fields else tuple()
         if fname:
             self._add_from_file(fname)
             self._define_keys(keys, self.get_header())
         else:
             self._define_keys(keys, None)
+
+    def get_header(self) -> tuple:
+        """ get headline, should start with '#'.
+        Same as STableKey!
+        """
+        head = self._rows[0]
+        assert head[0] == "#"
+        spl_chr = self._splitter
+        return tuple(head[1:].strip().split(spl_chr))
 
     def _define_keys(self, keys: tuple, header) -> bool:
         """ Internal set of fields! """

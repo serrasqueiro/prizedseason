@@ -37,7 +37,7 @@ def run_tests(out, args: list) -> int:
         "keys": None,
         }
     if not args:
-        return True
+        return 0
     param = args
     while param and param[0].startswith("-"):
         if param[0] in ("-k", "--keys"):
