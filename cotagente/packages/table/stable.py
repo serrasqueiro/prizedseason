@@ -77,7 +77,42 @@ class STableKey(STableText):
         self._remaining_fields = 0 if s_val_join else -1
         self._unique_k2 = unique_k2
 
-    def hash_key(self, invalid_chrs=None, sort_as="A"):
+    def get_key_names(self) -> tuple:
+        """ Returns the key names. """
+        heads = self.get_header()
+        if self._unique_k2:
+            return (heads[0], heads[1])
+        return (heads[0],)
+
+    def get_keys(self) -> list:
+        """ Returns the keyvalues """
+        _, _, ordered = self.keyval
+        if ordered is None:
+            self.hash_key()
+            _, _, ordered = self.keyval
+        assert isinstance(ordered, list)
+        return ordered
+
+    def reload(self) -> bool:
+        """ Reloads data from file. """
+        prev_header = self.get_header()
+        self.keyval = (None, None, None)
+        self._rows = list()
+        is_ok = self._add_from_file(self._origin)
+        if not is_ok:
+            return False
+        is_ok = self.get_header() == prev_header
+        if is_ok:
+            self._msg = f"Previous header mismatches new: {self.get_header()}"
+        return is_ok
+
+    def hash_key(self, invalid_chrs=None, sort_as="A") -> bool:
+        single_from_name = self._unique_k2
+        assert isinstance(single_from_name, bool)
+        is_ok = self._hash_keys(invalid_chrs, sort_as, single_from_name)
+        return is_ok
+
+    def _hash_keys(self, invalid_chrs=None, sort_as="A", single_from_name=True) -> bool:
         """ Hashes this table.
             sort_as='A' means order alphabetically, but ignore-case,
             sort_as='a' means order alphabetically (do not ignore case).
@@ -126,7 +161,13 @@ class STableKey(STableText):
             if self._unique_k2 and k2 in from_name:
                 self._set_error(f"Duplicate value: '{k2}'")
                 return False
-            from_name[k2] = k1
+            if single_from_name:
+                from_name[k2] = k1
+            else:
+                if k2 in from_name:
+                    from_name[k2].append(k1)
+                else:
+                    from_name[k2] = [k1]
         ordered = list(key_to.keys())
         if sort_as == "A":
             ordered.sort(key=str.casefold)
