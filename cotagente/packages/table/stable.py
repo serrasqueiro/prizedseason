@@ -23,12 +23,15 @@ class STable():
     def get_origin_file(self):
         return self._origin
 
-    def _set_error(self, msg):
+    def _set_error(self, msg) -> bool:
         if not msg:
             return False
         print(f"Error: {msg}")
         self._msg = msg
         return True
+
+    def report_error(self, msg: str) -> bool:
+        return self._set_error(msg)
 
 
 class STableText(STable):
@@ -89,6 +92,12 @@ class STableKey(STableText):
         spl_chr = self._splitter
         return tuple(head[1:].strip().split(spl_chr))
 
+    def get_key_list(self) -> list:
+        """ Returns the list of keys. """
+        alist = self.keyval[2]
+        assert alist is not None
+        return alist
+
     def get_key_names(self) -> tuple:
         """ Returns the key names. """
         heads = self.get_header()
@@ -107,7 +116,7 @@ class STableKey(STableText):
             if not is_ok:
                 return list()
             _, _, ordered = self.keyval
-        assert ordered
+        assert ordered is not None
         assert isinstance(ordered, list)
         return ordered
 
