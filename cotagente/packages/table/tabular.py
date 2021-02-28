@@ -11,8 +11,11 @@ import table.stable as stable
 class Tabular(stable.STableText):
     """ Tabular, 'simplest text' tables!
     """
-    def __init__(self, fname=None, key_fields=None, split_chr=None):
+    _refurbish_head = ""
+
+    def __init__(self, fname=None, key_fields=None, split_chr=None, ref_str=""):
         self._remaining_fields = 0
+        self._refurbish_head = ref_str
         if split_chr is None:
             self._splitter = self._default_splitter
         else:
@@ -38,7 +41,7 @@ class Tabular(stable.STableText):
         """ Internal set of fields! """
         assert isinstance(keys, tuple)
         self._key_fields = keys
-        self._all_fiels = header
+        self._all_fields = header
         if not header:
             return True
         assert isinstance(header, tuple)
@@ -53,6 +56,19 @@ class Tabular(stable.STableText):
                 return False
         self._key_fields = keys
         self._all_fields = tuple([key_field_str(elem) for elem in header])
+        return True
+
+    def _add_from_file(self, fname) -> bool:
+        self._origin, self._msg = fname, ""
+        with open(fname, "r", encoding="ISO-8859-1") as f_in:
+            data = f_in.read().splitlines()
+        if not data:
+            return False
+        if data[0].startswith("#"):
+            if self._refurbish_head:
+                data = self._refurbish_head.split("\n") + data[1:]
+        for row in data:
+            self._rows.append(row)
         return True
 
 
