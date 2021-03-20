@@ -14,6 +14,14 @@ class STable():
     _rows = []
     _msg = ""
 
+    def exists(self) -> bool:
+        """ Returns True if original filename exists. """
+        return self._origin != ""
+
+    def is_empty(self) -> bool:
+        """ Returns True if content is empty. """
+        return not self._rows
+
     def get_rows(self):
         return self._rows
 
@@ -39,6 +47,10 @@ class STableText(STable):
     _remaining_fields = 0
     _key_fields, _all_fields = tuple(), tuple()
     _default_splitter = ";"
+
+    def is_empty(self) -> bool:
+        """ Returns True if content is (nearly) empty. """
+        return len(self._rows) <= 1
 
     def get_header(self) -> tuple:
         return tuple()
@@ -78,6 +90,8 @@ class STableKey(STableText):
             self._splitter = split_chr
         if fname:
             self._add_from_file(fname)
+        else:
+            self._rows = ["#"]
         self.keyval = (None, None, None)
         if s_val_join is None:
             self._s_val_join = ";"
