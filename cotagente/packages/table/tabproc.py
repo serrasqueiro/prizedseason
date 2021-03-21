@@ -86,7 +86,7 @@ class Content(HashedContent):
                 if fidx not in keying:
                     values.append(items[fidx])
             if keying:
-                key_idx = keying[0] - 1
+                key_idx = keying[0]
                 if len(keying) == 1:
                     if items[key_idx] in single:
                         msg = f"Duplicate (single) key at row#{idx}: '{linear_text(row)}'"
