@@ -55,16 +55,39 @@ def run_tests(out, args: list) -> int:
 def run_test(out, fname, opts) -> bool:
     """ Read text file 'fname'.
     """
+    mychr_split = ";"
+    aline = open(fname, "r").read(128).split("\n")
+    if len(aline) > 1 and "\t" in aline[0]:
+        mychr_split = "\t"
     key_list = opts["keys"].split(":") if opts["keys"] else list()
     keys = tuple(key_list)
     if keys:
-        atbl = tabular.Tabular(fname, key_fields=keys)
+        print(f"keys={keys}")
+        atbl = tabular.Tabular(fname, key_fields=keys, split_chr=mychr_split)
     else:
-        atbl = tabular.Tabular(fname)
+        atbl = tabular.Tabular(fname, split_chr=mychr_split)
     print("Header for", fname, "is:", atbl.get_header())
-    print("_all_fields:", atbl.get_fields())
+    print("_all_fields = get_fields():", atbl.get_fields())
     if atbl.get_msg():
         print("msg:", atbl.get_msg())
+    print("field_kinds():", atbl.field_kinds())
+    cont = atbl.content()
+    is_ok = cont.parse()
+    assert is_ok, f"cont.parse() failed: '{fname}'"
+    errs = cont.data()["errors"]
+    bykey = cont.data()["by-key"]
+    print("Tabular() content():", cont)
+    print("Content().fields():", cont.fields())
+    print("data()['errors']:", errs)
+    print("data()['by-key']:", bykey)
+    print("All data follows next:")
+    idx = 0
+    for row in cont.raw_data():
+        idx += 1
+        print(":::", idx, row)
+        there = cont.data()["by-idx"][idx]
+        assert row == there, "Unexpected content!"
+    #print("by-idx:", cont.data()["by-idx"])
     return True
 
 

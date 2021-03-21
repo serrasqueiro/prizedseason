@@ -56,6 +56,7 @@ class STableText(STable):
         return tuple()
 
     def get_fields(self) -> tuple:
+        """ Returns a tuple of strings with all fields. """
         assert isinstance(self._all_fields, tuple)
         return self._all_fields
 
