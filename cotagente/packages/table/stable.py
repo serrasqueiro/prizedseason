@@ -44,6 +44,8 @@ class STable():
 
 class STableText(STable):
     """ Text Table """
+    # pylint: disable=no-self-use
+
     _remaining_fields = 0
     _key_fields, _all_fields = tuple(), tuple()
     _default_splitter = ";"

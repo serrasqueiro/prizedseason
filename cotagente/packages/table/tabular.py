@@ -3,7 +3,7 @@
 """
 Simplest text tables
 """
-# pylint: disable=missing-function-docstring, unused-argument
+# pylint: disable=missing-function-docstring, unused-argument, too-many-instance-attributes
 
 import table.stable as stable
 import table.tabproc as tabproc

@@ -73,12 +73,14 @@ def run_test(out, fname, opts) -> bool:
     print("field_kinds():", atbl.field_kinds())
     cont = atbl.content()
     is_ok = cont.parse()
-    assert is_ok, f"cont.parse() failed: '{fname}'"
     errs = cont.data()["errors"]
+    if not is_ok or errs:
+        print("cont.parse() returned", is_ok)
+        print("data()['errors']:", [msg for msg, _, _ in errs])
+        return False
     bykey = cont.data()["by-key"]
     print("Tabular() content():", cont)
     print("Content().fields():", cont.fields())
-    print("data()['errors']:", errs)
     print("data()['by-key']:", bykey)
     print("All data follows next:")
     idx = 0
