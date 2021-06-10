@@ -14,7 +14,7 @@ class Tabular(stable.STableText):
     """
     _refurbish_head = ""
 
-    def __init__(self, fname=None, key_fields=None, split_chr=None, ref_str=""):
+    def __init__(self, fname=None, data:str="", key_fields=None, split_chr=None, ref_str=""):
         self._remaining_fields = 0
         self._refurbish_head = ref_str
         if split_chr is None:
@@ -24,10 +24,13 @@ class Tabular(stable.STableText):
         self._origin, self._rows = "", list()
         keys = key_fields if key_fields else tuple()
         if fname:
+            assert data == ""
             self._add_from_file(fname)
             self._define_keys(keys, self.get_header())
         else:
-            self._define_keys(keys, None)
+            assert fname is None, "Either 'fname' or 'data'"
+            self._add_from_data(data)
+            self._define_keys(keys, self.get_header())
         assert self._fields is not None
         assert isinstance(self._fields, tuple)
         if self._fields:
@@ -63,7 +66,7 @@ class Tabular(stable.STableText):
         """ Return the table payload content. """
         return self._content
 
-    def _define_keys(self, keys: tuple, header) -> bool:
+    def _define_keys(self, keys:tuple, header) -> bool:
         """ Internal set of fields! """
         assert isinstance(keys, tuple)
         self._key_fields = keys
@@ -95,9 +98,14 @@ class Tabular(stable.STableText):
         return True
 
     def _add_from_file(self, fname) -> bool:
-        self._origin, self._msg = fname, ""
+        self._origin = fname
         with open(fname, "r", encoding="ISO-8859-1") as f_in:
-            data = f_in.read().splitlines()
+            content = f_in.read()
+        return self._add_from_data(content)
+
+    def _add_from_data(self, content:str) -> bool:
+        self._msg = ""
+        data = content.splitlines()
         if not data:
             return False
         if data[0].startswith("#"):

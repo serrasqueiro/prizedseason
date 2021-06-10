@@ -59,7 +59,8 @@ class STableText(STable):
 
     def get_fields(self) -> tuple:
         """ Returns a tuple of strings with all fields. """
-        assert isinstance(self._all_fields, tuple)
+        assert self._all_fields is not None
+        assert isinstance(self._all_fields, tuple), f"Invalid _all_fields: {self._all_fields}"
         return self._all_fields
 
     def _add_from_file(self, fname) -> bool:
@@ -82,6 +83,7 @@ class STableText(STable):
 
 class STableKey(STableText):
     """ Table with one key """
+    # pylint: disable=too-many-instance-attributes
     _invalid_chrs_base = " :!?*()"
     _unique_k2 = True
 
