@@ -1,4 +1,4 @@
-# (c)2020  Henrique Moreira (h@serrasqueiro.com)
+# (c)2020, 2021  Henrique Moreira (h@serrasqueiro.com)
 
 """
 List and Touches git repositories!
@@ -8,7 +8,7 @@ List and Touches git repositories!
 ### See also ghelp.test.py (tester of 'ghelp')
 ###
 
-# pylint: disable=no-else-return, invalid-name
+# pylint: disable=unused-argument, invalid-name
 
 import sys
 import git
@@ -42,10 +42,10 @@ Commands are:
    details  Details of repository (log)
 
 Options:
+   --verbose      (Only for 'touch')
    --dry-run      Show what the command would do (but does not do it)
 """)
-        code = 0
-    sys.exit(code)
+    sys.exit(code if code else 0)
 
 
 def run_main(cmd, args, debug=0):
@@ -55,41 +55,53 @@ def run_main(cmd, args, debug=0):
     name = REPO_SAMPLE_NAME
     param = args
     opts = {"dry-run": False,
+            "verbose": 0,
             }
     default_dir = working_dir()
     assert default_dir
 
     if cmd == "list":
-        if param == []:
+        if not param:
             param = [default_dir]
         where = param[0]
         del param[0]
-        rp = new_repo(err_file, where, name)
-        code, _ = run_list(out_file, err_file, rp, param, debug=debug)
+        rpl = new_repo(err_file, where, name)
+        code, _ = run_list(out_file, err_file, rpl, param, debug=debug)
         return code
-    elif cmd == "touch":
-        if param:
+    if cmd == "touch":
+        while param and param[0].startswith("-"):
             if param[0] == "--dry-run":
-                opts["dry-run"] = True
                 del param[0]
+                opts["dry-run"] = True
+                continue
+            if param[0] in ("-v", "--verbose",):
+                del param[0]
+                opts["verbose"] += 1
+                continue
+            return None
+        if param:
+            where = param[0]
+            del param[0]
+            if param:
+                return None
         else:
-            param = [default_dir]
-        where = param[0]
-        del param[0]
-        rp = new_repo(err_file, where, name)
-        code, queue = run_list(None, err_file, rp, param, debug=debug)
-        if code == 0:
-            run_touch(out_file, err_file, rp, queue, opts)
+            where = default_dir
+        opt_list = [opts["verbose"], 0]
+        rpl = new_repo(err_file, where, name)
+        code, queue = run_list(None, err_file, rpl, opt_list, debug=debug)
+        if code:
+            return code
+        run_touch(out_file, err_file, rpl, queue, opts)
         return code
-    elif cmd == "detail":
+    if cmd == "detail":
         if param == []:
             param = [default_dir]
         where = param[0]
         del param[0]
-        rp = new_repo(err_file, where, name)
-        code = run_detail(err_file, rp, param, debug=debug)
+        rpl = new_repo(err_file, where, name)
+        code = run_detail(err_file, rpl, param, debug=debug)
         return code
-    elif cmd == "ls":
+    if cmd == "ls":
         if param == []:
             param = [default_dir]
         code = do_ls(out_file, err_file, param)

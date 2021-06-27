@@ -1,3 +1,5 @@
+# (c)2020, 2021  Henrique Moreira
+
 """ stewstick -- basic stock files
 """
 
@@ -12,7 +14,7 @@ from ztable.xdate import MsDate
 from ztable.textual import trim_text, OPT_STRIP_BOTH
 from zlatin import flow_list, numbered_list, cur_format
 
-import sindexes.weight_stocks
+import sindexes.stockspt
 from snamings import StockWeight, StockRefs
 
 
@@ -330,14 +332,15 @@ def slim_stocks(cont, param, opts, rules, debug=0):
         if what is None or what == w:
             y_shown += 1
             s_idx = "" if verbose <= 0 else "{}:\t".format(y_shown)
-            s_date, tm = row[1], row[2]
+            s_date, a_time = row[1], row[2]
             ms = MsDate(s_date)
-            date_time = s_date+" "+tm
+            s_time = a_time if a_time != "-" else "12:00"
+            date_time = s_date + " " + s_time
             rest = row[3:]
             s_name, _, _, quant, s_per, coin, s_loc_val = rest
             per_stock = float(s_per) if s_per not in ("", "-") else 0.0  # per stock value
             per = round(per_stock, 4)
-            loc_val = round(float(s_loc_val), 3)
+            loc_val = -1.0 * round(float(s_loc_val), 3)
             weekday = ms.weekday_str()
             diff = round(quant * per, 3) - loc_val
             tic = "" if diff == 0.0 else " diff={:.3f}=({}*{})".format(diff, quant, per)
@@ -480,7 +483,7 @@ def bring_option_key(s):
 
 def populate_stocks(stocks):
     index_names = []
-    for tup_text in (sindexes.weight_stocks.STK_W_PSI20,
+    for tup_text in (sindexes.stockspt.STK_W_PSI20,
                      ):
         idx_name, lines = tup_text
         sw = StockWeight(idx_name, lines)
