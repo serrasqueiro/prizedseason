@@ -3,7 +3,7 @@
 """
 Easy simple text tables
 """
-# pylint: disable=missing-function-docstring, unused-argument, no-member
+# pylint: disable=missing-function-docstring, unused-argument
 
 _ONLY_TXT_NL = True  # True: means, *no* CR in text files!
 
