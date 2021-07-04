@@ -7,36 +7,13 @@ VirtualBox vbox text-file reader
 
 # pylint: disable=missing-function-docstring
 
-import sys
 from lxml import etree
-
-def main_test() -> int:
-    """ Just testing """
-    path = sys.argv[1]
-    vbx = VBoxer(path)
-    displayer("ALL", vbx.elems)
-    for name in sorted(vbx.props()):
-        shown = vbx.props()[name]
-        print(f"{name}: {shown}")
-    return 0
-
-def displayer(astr:str, nodes):
-    # pylint: disable=unused-variable
-    xtra = None
-    print("displayer():", astr, "len:", len(nodes))
-    for tup in nodes:
-        if isinstance(tup, tuple):
-            name, elem, attrib, text = tup
-        else:
-            print("alist:", tup)
-            continue
-        shown = xml_text(text)
-        print(astr+":", name, f"text='{shown}',", f"attrib={elem.attrib}")
-        print()
 
 
 class GenXML():
     """ Generic XML reader """
+    # pylint: disable=no-self-use
+
     _enc_read = "ISO-8859-1"	# static!
     _path = ""
     _data = ""
@@ -80,20 +57,41 @@ class VBoxer(GenXML):
         super().__init__(path)
         self._process()
 
-    @staticmethod
-    def default_vm_dict() -> dict:
-        vmd = {
-            'HardDisks': list(),
-            }
-        return vmd
-
-    def props(self) -> dict:
-        """ Returns VM props dictionary. """
+    def all_props(self) -> dict:
+        """ Returns all VM props dictionary. """
         assert self._vm
         return self._vm
 
+    def props(self) -> dict:
+        """ Returns only the VM props dictionary. """
+        assert self._vm
+        return self._vm['VM']
+
+    def by_area(self, key:str):
+        result = self._vm['area'].get(key)
+        if not result:
+            return list()
+        return result
+
+    @staticmethod
+    def default_vm_dict() -> dict:
+        vmd = {
+            'VM': {
+                'HardDisks': list(),
+            },
+            'area': {
+                'hard-disk': list(),
+            },
+        }
+        return vmd
+
+    def process(self, data:str) -> bool:
+        self._reader(data)
+        return self._process()
+
     def _process(self) -> bool:
-        self._vm = VBoxer.default_vm_dict()
+        vmd = VBoxer.default_vm_dict()
+        self._vm = vmd
         self.elems = list()
         if self._aroot is None:
             return False
@@ -103,12 +101,20 @@ class VBoxer(GenXML):
             self.elems.append(tup)
         for tup in self.elems:
             name, elem, _, _ = tup
-            if name not in self._vm:
+            if name not in self.props():
                 continue
-            deep = [(self.detag(one.tag), one.attrib) for one in elem.iter()]
-            print(":::", name, deep)
-            self._vm[name] += deep
+            els = elem.getchildren()
+            deep = [(self.detag(one.tag), one.attrib) for one in els]
+            self._vm['VM'][name] += deep
+        self._simplify(self._vm['area'])
         return True
+
+    def _simplify(self, dest):
+        atypes = ("Normal",)
+        els = [attr for name, attr in self.props()['HardDisks'] if name == "HardDisk"]
+        dest['hard-disk'] = [
+            [item['location'] for item in els if item['type'] in atypes]
+        ]
 
 def xml_text(astr) -> str:
     """ Returns one line text display of a XML element text """
@@ -119,4 +125,3 @@ def xml_text(astr) -> str:
 # Main script
 if __name__ == "__main__":
     print("Please import me.")
-    main_test()
