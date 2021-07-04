@@ -15,22 +15,24 @@ def main_test() -> int:
     path = sys.argv[1]
     vbx = VBoxer(path)
     displayer("ALL", vbx.elems)
+    for name in sorted(vbx.props()):
+        shown = vbx.props()[name]
+        print(f"{name}: {shown}")
     return 0
 
 def displayer(astr:str, nodes):
+    # pylint: disable=unused-variable
     xtra = None
+    print("displayer():", astr, "len:", len(nodes))
     for tup in nodes:
         if isinstance(tup, tuple):
-            name, elem = tup
+            name, elem, attrib, text = tup
         else:
-            displayer("ITEM", [one for one in tup])
+            print("alist:", tup)
             continue
-        print(astr+":", name, elem)
-        if name == "ExtraData":
-            xtra = elem
+        shown = xml_text(text)
+        print(astr+":", name, f"text='{shown}',", f"attrib={elem.attrib}")
         print()
-    if xtra is not None:
-        displayer("EXTRA", xtra)
 
 
 class GenXML():
@@ -53,6 +55,9 @@ class GenXML():
         assert self._aroot is not None
         return self._aroot
 
+    def detag(self, tag:str):
+        return tag.split('/')[-1].strip('}')
+
     def _reader(self, data:str):
         self._data = data
         cont = data
@@ -68,16 +73,48 @@ class GenXML():
 
 class VBoxer(GenXML):
     """ vbox (VirtualBox) text-file reader """
+    elems = None
+    _vm = None
+
     def __init__(self, path:str=""):
         super().__init__(path)
         self._process()
 
+    @staticmethod
+    def default_vm_dict() -> dict:
+        vmd = {
+            'HardDisks': list(),
+            }
+        return vmd
+
+    def props(self) -> dict:
+        """ Returns VM props dictionary. """
+        assert self._vm
+        return self._vm
+
     def _process(self) -> bool:
+        self._vm = VBoxer.default_vm_dict()
+        self.elems = list()
         if self._aroot is None:
             return False
-        els = self.root()[0]
-        self.elems = [(one.tag.split('/')[-1].strip('}'), one) for one in els]
+        for one in self._aroot.iter():
+            name = self.detag(one.tag)
+            tup = (name, one, one.attrib, one.text)
+            self.elems.append(tup)
+        for tup in self.elems:
+            name, elem, _, _ = tup
+            if name not in self._vm:
+                continue
+            deep = [(self.detag(one.tag), one.attrib) for one in elem.iter()]
+            print(":::", name, deep)
+            self._vm[name] += deep
         return True
+
+def xml_text(astr) -> str:
+    """ Returns one line text display of a XML element text """
+    if not astr:
+        return ""
+    return astr.strip().replace("\n", "^p")
 
 # Main script
 if __name__ == "__main__":
