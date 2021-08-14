@@ -10,6 +10,7 @@ from tconfig.adate import ShortDate, aDateMaster
 
 
 class Formatter():
+    """ Basic number formatting. """
     _fmt_str = "{:0.0f}"	# or "{:0.3f}"
 
     def get_format_str(self):
@@ -21,13 +22,11 @@ class Measure(Formatter):
     measure = 0.0
     calendar = None
     _when, _week_day = "", ""
-    new_format = None
 
     def __init__ (self, when=""):
         """ Initializer! """
         assert isinstance(when, str)
         self.measure = 0.0
-        self.new_format = None
         self._set_when(when)
 
 
@@ -36,13 +35,13 @@ class Measure(Formatter):
 
 
     def __str__ (self):
-        if self.new_format:
-            fmt_str = self.new_format
-        s = self._when + " " + self.get_format_str().format(self.measure)
+        astr = self._when + " " + self.get_format_str().format(self.measure)
         ###englishWeekday = aDateMaster.lang_week_day(self._week_day)
         ###s += ":::" + self.calendar.to_str() + "\t" + englishWeekday
-        return s
+        return astr
 
+    def when(self) -> str:
+        return self._when
 
     def _set_when(self, when):
         self._when, self._week_day = "", ""
