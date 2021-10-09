@@ -30,7 +30,7 @@ class Tabular(stable.STableText):
         else:
             assert fname is None, "Either 'fname' or 'data'"
             self._add_from_data(data)
-            self._define_keys(keys, self.get_header())
+            self._define_keys(keys, tuple())
         assert self._fields is not None
         assert isinstance(self._fields, tuple)
         if self._fields:

@@ -11,7 +11,8 @@ import table.tabular as tabular
 
 def main():
     """ Main test! """
-    assert runner(sys.stdout, sys.argv[1:]) == 0
+    code = runner(sys.stdout, sys.argv[1:])
+    assert code == 0
 
 
 def runner(out, args) -> int:
@@ -27,7 +28,7 @@ Options are:
         return 0
     return code
 
-def run_tests(out, args: list) -> int:
+def run_tests(out, args: list):
     """ Run tests.
     You can indicate textual files in the arguments.
     """
@@ -35,7 +36,7 @@ def run_tests(out, args: list) -> int:
     assert atbl.get_msg() == ""
     opts = {
         "keys": None,
-        }
+    }
     if not args:
         return 0
     param = args
