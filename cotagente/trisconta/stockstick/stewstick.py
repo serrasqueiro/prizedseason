@@ -340,7 +340,10 @@ def slim_stocks(cont, param, opts, rules, debug=0):
             s_name, _, _, quant, s_per, coin, s_loc_val = rest
             per_stock = float(s_per) if s_per not in ("", "-") else 0.0  # per stock value
             per = round(per_stock, 4)
-            loc_val = -1.0 * round(float(s_loc_val), 3)
+            try:
+                loc_val = -1.0 * round(float(s_loc_val), 3)
+            except ValueError:
+                assert False, f"Bogus s_loc_val ({s_loc_val}): {row}"
             weekday = ms.weekday_str()
             diff = round(quant * per, 3) - loc_val
             tic = "" if diff == 0.0 else " diff={:.3f}=({}*{})".format(diff, quant, per)
