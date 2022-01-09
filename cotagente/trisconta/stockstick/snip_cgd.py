@@ -3,7 +3,8 @@
 
 """ CGD comprovativo.txu/ mov.lst reader
 
-# head -1 comprovativo.txu mov.lst | sed 's/^# \(.*:\)\(.*\)/# \1 .../'
+Command:
+	cmd = (see below)
 ==> comprovativo.txu <==
 # Conta: ...
 
@@ -11,6 +12,8 @@
 #key;expl
 
 """
+# cmd:
+#	head -1 comprovativo.txu mov.lst | sed 's/^# \(.*:\)\(.*\)/# \1 .../'
 
 # pylint: disable=missing-docstring
 
@@ -42,12 +45,12 @@ def run(args:list) -> int:
     if not param:
         param = [""]
     for item in param:
-        dump_pair(out, item, (fname, mov_fname), opts)
+        code = dump_pair(out, item, (fname, mov_fname), opts)
+        if code:
+            print(f"Error code={code}, item: {item}")
 
 
-def dump_pair(out, adir:str, params:tuple, opts:dict):
-    s_head = "#mdate;vdate;desc;debt;cred;acc;eq;hint"
-    # atbl.get_fields() = ('mdate', 'vdate', 'desc', 'debt', 'cred', 'acc', 'eq', 'hint')
+def dump_pair(out, adir:str, params:tuple, opts:dict) -> int:
     fname, mov_fname = params
     verbose = opts["verbose"]
     if adir:
@@ -55,18 +58,27 @@ def dump_pair(out, adir:str, params:tuple, opts:dict):
         mov_fname = os.path.join(adir, mov_fname)
     if verbose > 0:
         print("# Dump:", fname)
-    dump_stuff(out, adir, fname, mov_fname, opts)
+    return dump_stuff(out, fname, mov_fname, opts)
 
 
-def dump_stuff(out, adir, fname, mov_fname, opts):
+def dump_stuff(out, fname, mov_fname, opts:dict) -> int:
+    """ Interesting dump itself! """
+    assert opts
     s_head = "#mdate;vdate;desc;debt;cred;acc;eq;hint"
     # atbl.get_fields() = ('mdate', 'vdate', 'desc', 'debt', 'cred', 'acc', 'eq', 'hint')
     atbl = table.tabular.Tabular(fname, split_chr=";", ref_str=s_head)
     #print("# atbl:", atbl)
-    mov = table.stable.STableKey(mov_fname, unique_k2=False)
-    mov.get_keys()
-    mov_info_keys = mov.keyval[0]
+    try:
+        mov = table.stable.STableKey(mov_fname, unique_k2=False)
+    except FileNotFoundError:
+        mov = None
+    if mov is None:
+        mov_info_keys = tuple()
+    else:
+        mov.get_keys()
+        mov_info_keys = mov.keyval[0]
     assert mov_info_keys is not None
+    # Row iteration
     for row in atbl.get_rows():
         if row.startswith("#"):
             continue
@@ -81,11 +93,12 @@ def dump_stuff(out, adir, fname, mov_fname, opts):
         mkey = f"{mdate},{dct['debt']},{dct['cred']},{dct['acc']}"
         #print(mdate, dct)
         astr = f"{mdate} {dct['debt']:>12} {dct['cred']:>12} {dct['acc']:>12} {dct['desc']}"
-        hint = mov_info_keys.get(mkey)
+        hint = mov_info_keys.get(mkey) if mov_info_keys is not None else None
         if hint is not None:
             astr += " @ " + hint
         if out:
             out.write(astr + "\n")
+    return 0
 
 
 def ymdate(astr) -> str:
