@@ -111,6 +111,12 @@ class STableKey(STableText):
         spl_chr = self._splitter
         return tuple(head[1:].strip().split(spl_chr))
 
+    def key_dict(self):
+        """ Returns the keyed dictionary. """
+        adict = self.keyval[0]
+        assert isinstance(adict, dict)
+        return adict
+
     def get_key_list(self) -> list:
         """ Returns the list of keys. """
         alist = self.keyval[2]
