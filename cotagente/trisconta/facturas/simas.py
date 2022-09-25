@@ -1,4 +1,7 @@
-# simas.py  (c)2020  Henrique Moreira
+#!/usr/bin/python3
+#-*- coding: ISO-8859-1 -*-
+#
+# simas.py  (c)2020, 2022  Henrique Moreira
 
 """
   simas -- Read out of SIMAS, contadores agua.
@@ -6,7 +9,7 @@
   Compatibility: python 3.
 """
 
-# pylint: disable=missing-function-docstring, unused-argument
+# pylint: disable=missing-function-docstring, invalid-name
 
 import sys
 from waxpage.redit import BareText
@@ -16,7 +19,7 @@ from consumption.measure import Measure
 
 def main():
     """ Main run """
-    args = sys.argv[ 1: ]
+    args = sys.argv[1:]
     code = run_simas(sys.stdout, args)
     if code is None:
         print("""
@@ -28,13 +31,13 @@ Usage:
     sys.exit(code)
 
 
-def run_simas (out_file, args):
+def run_simas(out_file, args):
     """ Basic run """
     code = simas_agua(out_file, args)
     return code
 
 
-def simas_agua (out_file, args):
+def simas_agua(out_file, args):
     """ SIMAS (agua) """
     param = args
     if param:
@@ -51,8 +54,8 @@ def simas_agua (out_file, args):
     if len(measured) > 1:
         one = measured[0].calendar
         two = measured[1].calendar
-        reversed = two < one
-        if reversed:
+        rev = two < one
+        if rev:
             measured.reverse()
     for m in measured:
         y = m.measure
@@ -69,13 +72,13 @@ def simas_agua (out_file, args):
                 m3_per_day = (m.measure - last) / float(delta_days)
                 m3_month = m3_per_day * 30
                 s = water_formatted(infos=m, delta=delta_days, litre=m3_month * 1000.0)
-                out_file.write("{}\n".format(s))
+                out_file.write(f"{s}\n")
         last = y
         x = a_day
     return code
 
 
-def process_input (out_file, lines, measured, action=""):
+def process_input(out_file, lines, measured, action=""):
     """ Text input parser. """
     code = 0
     juice = []
@@ -83,6 +86,8 @@ def process_input (out_file, lines, measured, action=""):
         s = line.strip()
         if s.find("Data") == 0:
             continue
+        if s.count(",") > 1:
+            s = s.replace(",", "\t")
         if len(s) > 10:
             date = s[:10]
             rest = s[11:].strip()
@@ -104,8 +109,7 @@ def process_input (out_file, lines, measured, action=""):
         measured.append(m)
     if action == "dump":
         for item in measured:
-            print(item)
-            #out_file.write(' '.join( j ) + "\n")
+            out_file.write(f"{item}\n")
     return code
 
 
