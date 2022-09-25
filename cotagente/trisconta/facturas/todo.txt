@@ -1,0 +1,8 @@
+git clone git@gist.github.com:87561e41ced92f6835fb454e23a9fb3e.git
+
+# factura da agua:
+% cat simas_hm.txt | py simas.py
+
+
+cat ~/git_repos/anaceo/giro_repo_com/external/snippets/simas/simas_hm.* | python simas.py
+
