@@ -47,10 +47,18 @@ def simas_agua(out_file, args):
     red.inEncoding = "iso-8859-1"
     is_ok = red.file_reader()
     #print("is_ok:", is_ok, "; inFilename:", red.inFilename if red.inFilename!="" else "-")
+    assert is_ok
     measured = []
     code = process_input(out_file, red.lines, measured, action="")
+    if code > 0:
+        return code
+    dump_processed(out_file, measured)
+    return code
+
+def dump_processed(out_file, measure_in):
     last = 0.0
     x = 0
+    measured = measure_in
     if len(measured) > 1:
         one = measured[0].calendar
         two = measured[1].calendar
@@ -75,32 +83,14 @@ def simas_agua(out_file, args):
                 out_file.write(f"{s}\n")
         last = y
         x = a_day
-    return code
-
+    return measured
 
 def process_input(out_file, lines, measured, action=""):
     """ Text input parser. """
     code = 0
-    juice = []
-    for line in lines:
-        s = line.strip()
-        if s.find("Data") == 0:
-            continue
-        if s.count(",") > 1:
-            s = s.replace(",", "\t")
-        if len(s) > 10:
-            date = s[:10]
-            rest = s[11:].strip()
-            if rest.endswith(("Empresa", "Leitor")):
-                rest += " -"
-            baga = rest.replace('\t', ' ').split(' ')
-            is_ok = len(baga) == 4
-            msg = f"Failed: date={date}, baga: {baga}; expected 4 elems, got {len(baga)}"
-            if not is_ok:
-                print(msg)
-                return 1
-            item = {"date": date, "m3": baga[1], "who": baga[2]}
-            juice.append(item)
+    juice = process_lines(lines)
+    if not juice:
+        return 1
     for item in juice:
         m = Measure(item["date"])
         m.measure = measured_m3(item["m3"])
@@ -112,12 +102,38 @@ def process_input(out_file, lines, measured, action=""):
             out_file.write(f"{item}\n")
     return code
 
+def process_lines(lines) -> list:
+    juice = []
+    err = sys.stderr
+    for idx, line in enumerate(lines, 1):
+        s = line.strip()
+        if s.find("Data") == 0:
+            continue
+        if s.count(",") > 1:
+            s = s.replace(",", "\t")
+        if len(s) <= 10:
+            err.write(f"Line {idx} is ignored\n")
+        else:
+            date = s[:10]
+            rest = s[11:].strip()
+            if rest.endswith(("Empresa", "Leitor", "Internet")):
+                rest += " -"
+            else:
+                err.write(f"Warn, line {idx}: {line}\n")
+            baga = rest.replace('\t', ' ').split(' ')
+            is_ok = len(baga) == 4
+            msg = f"Failed: date={date}, baga: {baga}; expected 4 elems, got {len(baga)}"
+            if not is_ok:
+                err.write(f"{msg}\n")
+                return []
+            item = {"date": date, "m3": baga[1], "who": baga[2]}
+            juice.append(item)
+    return juice
 
 def measured_m3(astr:str) -> float:
     val = float(astr.replace(",", "."))
     assert val > 0.0
     return val
-
 
 def water_formatted(infos, delta, litre):
     """ Line formatted to show m3 of water """
