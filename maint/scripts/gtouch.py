@@ -1,4 +1,7 @@
-# (c)2020, 2021  Henrique Moreira (h@serrasqueiro.com)
+#!/usr/bin/python3
+#-*- coding: ISO-8859-1 -*-
+#
+# (c)2020, 2022  Henrique Moreira
 
 """
 List and Touches git repositories!
@@ -14,7 +17,7 @@ import sys
 import git
 from ghelper.ghelp import run_list, run_touch, run_detail
 from ghelper.pgit import GRepo, working_dir
-import tconfig.archs.dirs as dirs
+from tconfig.archs import dirs
 
 REPO_SAMPLE_NAME = "anyrepo"
 
@@ -39,7 +42,7 @@ Commands are:
 
    touch    Touch files
 
-   details  Details of repository (log)
+   detail   Details of repository (log)
 
 Options:
    --verbose      (Only for 'touch')
@@ -117,9 +120,9 @@ def new_repo(err_file, where, name, ret_error=2):
         repo_obj = GRepo(where, name)
     except git.InvalidGitRepositoryError:
         repo_obj = None
-    if repo_obj:
+    if repo_obj is not None:
         return repo_obj
-    err_file.write("Invalid repo: {}\n".format(where))
+    err_file.write(f"Invalid repo: {where}\n")
     sys.exit(ret_error)
 
 
