@@ -362,7 +362,7 @@ def slim_stocks(cont, param, opts, rules, debug=0):
                     s_idx, weekday, date_time, quant, s_name,
                     cur_format(per), cur_format(loc_val, tail_blank=None))
             ops.append(((date_time, s_name, quant, per), s))
-            assert coin == "EUR"
+            assert coin in ("EUR", "USD",), f"Bad coin: {coin}"
     if len(ops) >= 2:
         if ops[0][0][0] > ops[-1][0][0]:
             # Invert list: usually does, as input often starts with latest date first
