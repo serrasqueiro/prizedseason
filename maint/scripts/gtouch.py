@@ -45,8 +45,9 @@ Commands are:
    detail   Details of repository (log)
 
 Options:
-   --verbose      (Only for 'touch')
+   --verbose      Verbose output
    --dry-run      Show what the command would do (but does not do it)
+   --r            (Only for 'touch')
 """)
     sys.exit(code if code else 0)
 
@@ -57,9 +58,11 @@ def run_main(cmd, args, debug=0):
     err_file = sys.stderr
     name = REPO_SAMPLE_NAME
     param = args
-    opts = {"dry-run": False,
-            "verbose": 0,
-            }
+    opts = {
+        "r": False,  # Recursive
+        "dry-run": False,
+        "verbose": 0,
+    }
     default_dir = working_dir()
     assert default_dir
 
@@ -80,6 +83,10 @@ def run_main(cmd, args, debug=0):
             if param[0] in ("-v", "--verbose",):
                 del param[0]
                 opts["verbose"] += 1
+                continue
+            if param[0] in ("-r", "--recursive",):
+                del param[0]
+                opts["r"] += 1
                 continue
             return None
         if param:
