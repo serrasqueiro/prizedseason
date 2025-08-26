@@ -361,6 +361,7 @@ def slim_stocks(cont, param, opts, rules, debug=0):
                 s = "{}{} {} {:7} {:_<13.12} {} val: {}".format(
                     s_idx, weekday, date_time, quant, s_name,
                     cur_format(per), cur_format(loc_val, tail_blank=None))
+            s += " " + coin
             ops.append(((date_time, s_name, quant, per), s))
             assert coin in ("EUR", "USD",), f"Bad coin: {coin}"
     if len(ops) >= 2:
