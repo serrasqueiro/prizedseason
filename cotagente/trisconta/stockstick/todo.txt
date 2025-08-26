@@ -1,0 +1,39 @@
+
+export LOCAL_X=$HOME/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx
+
+py stewstick.py slim $LOCAL_X h
+
+python /home_02/henrique/anaceo/prizedseason/cotagente/trisconta/stockstick/stewstick.py slim --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float /home_02/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx H
+
+
+
+
+#### OLD >>>>
+
+sudo cp /home/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx /media/pctemp/new/b.xlsx
+sudo cp /home/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx /opt/local/temp/b.xlsx
+
+
+% py stewstick.py dump -v -g 1 -c :date:time /media/pctemp/new/b.xlsx
+
+% py stewstick.py textual -v --out T:/mnt/tmp/a.txt -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ELI:int:EUR::float:EUR:float M:/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx
+
+
+
+% py stewstick.py slim --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float M:/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx m
+% py stewstick.py slim --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float /home/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx m
+% py stewstick.py slim --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float /home/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx m
+% py stewstick.py slim --out T:/mnt/tmp/stocks_m.txt --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float M:/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx m
+
+
+# SEGUROS TRANQUILIDADE
+
+% py stewstick.py textual --strict -g 1 -c :date:float:para:p.:int:companhia:para-quem T:/mnt/tmp/hist.xlsx sheet1
+#	or:	/opt/net/mydocs/drived/casitas/Seguros/seguros_historico.xlsx
+% py stewstick.py textual --strict --out /mnt/tmp/textual.txt -g 1 -c :date:float:para:p.:int:companhia:para-quem T:/opt/local/mydocs/drived/casitas/Seguros/seguros_historico.xlsx sheet1
+
+% py stewstick.py stocks
+
+% py /home_02/henrique/git_repos/anaceo/prizedseason/cotagente/trisconta/stockstick/stewstick.py slide --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float /home_02/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx m
+% python /home_02/henrique/git_repos/anaceo/prizedseason/cotagente/trisconta/stockstick/stewstick.py slim --strict -g 1 -k ID:Data:Hora:Produto -c @who:date:time:@name:@ISIN:@ELI:int::float:EUR:float /home_02/henrique/wpriv/investment/reinveste_com/priv_accoes/Transactions_accoes.xlsx m
+
